@@ -1,0 +1,404 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============= Auth & Users =============
+
+enum UserRole {
+  ATHLETE
+  COACH
+  BRAND
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  name          String?
+  image         String?
+  role          UserRole  @default(ATHLETE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  athlete  Athlete?
+  coach    Coach?
+  brand    Brand?
+  accounts Account[]
+  sessions Session[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============= Athletes =============
+
+model Athlete {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  bio         String?  @db.Text
+  dateOfBirth DateTime?
+  height      Float?   // in inches
+  weight      Float?   // in pounds
+  sport       String
+  position    String?
+  school      String?
+  classYear   Int?
+  city        String?
+  state       String?
+  gpa         Float?
+  satScore    Int?
+  actScore    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  performanceStats PerformanceStat[]
+  videos           Video[]
+  socialLinks      SocialLink[]
+  ratings          Rating[]
+  evaluations      Evaluation[]
+  eventParticipants EventParticipant[]
+  offers           Offer[]
+
+  @@index([sport])
+  @@index([state])
+  @@index([classYear])
+}
+
+model PerformanceStat {
+  id        String   @id @default(cuid())
+  athleteId String
+  name      String   // e.g., "40-yard dash", "Vertical jump"
+  value     Float
+  unit      String   // e.g., "seconds", "inches"
+  category  String   // e.g., "Speed", "Strength", "Agility"
+  recordedAt DateTime @default(now())
+  verified   Boolean  @default(false)
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+  @@index([category])
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  athleteId   String
+  title       String
+  url         String
+  thumbnailUrl String?
+  duration    Int?     // in seconds
+  category    String   // e.g., "Highlights", "Full Game", "Training"
+  description String?  @db.Text
+  featured    Boolean  @default(false)
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+  @@index([featured])
+}
+
+model SocialLink {
+  id        String @id @default(cuid())
+  athleteId String
+  platform  String // e.g., "Twitter", "Instagram", "TikTok"
+  url       String
+  followers Int?
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@unique([athleteId, platform])
+  @@index([athleteId])
+}
+
+// ============= Rating System =============
+
+model Rating {
+  id        String   @id @default(cuid())
+  athleteId String
+
+  // Weighted components (40% performance, 20% physical, 15% academic, 15% social, 10% evaluation)
+  performanceScore Float  // 40% weight
+  physicalScore    Float  // 20% weight
+  academicScore    Float  // 15% weight
+  socialScore      Float  // 15% weight
+  evaluationScore  Float  // 10% weight
+
+  // Calculated total
+  overallScore     Float
+  percentile       Float
+
+  calculatedAt DateTime @default(now())
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+  @@index([overallScore])
+  @@index([percentile])
+}
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  athleteId   String
+  evaluatorId String   // Coach or scout who evaluated
+  score       Float
+  notes       String?  @db.Text
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+  @@index([evaluatorId])
+}
+
+// ============= Coaches =============
+
+model Coach {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  school       String?
+  team         String?
+  sport        String
+  position     String?  // e.g., "Head Coach", "Assistant Coach"
+  yearsExp     Int?
+  bio          String?  @db.Text
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sport])
+  @@index([verified])
+}
+
+// ============= Brands (NIL) =============
+
+model Brand {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String
+  industry    String?
+  website     String?
+  description String?  @db.Text
+  logo        String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offers Offer[]
+
+  @@index([industry])
+  @@index([verified])
+}
+
+model Offer {
+  id          String      @id @default(cuid())
+  brandId     String
+  athleteId   String
+  title       String
+  description String      @db.Text
+  value       Float?      // Dollar value if disclosed
+  type        OfferType
+  status      OfferStatus @default(PENDING)
+  expiresAt   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  brand   Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@index([athleteId])
+  @@index([status])
+}
+
+enum OfferType {
+  SPONSORSHIP
+  ENDORSEMENT
+  APPEARANCE
+  SOCIAL_MEDIA
+  MERCHANDISE
+  OTHER
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  COMPLETED
+}
+
+// ============= CAM CAMP Events =============
+
+model Event {
+  id          String      @id @default(cuid())
+  name        String
+  description String?     @db.Text
+  type        EventType
+  sport       String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime
+  maxParticipants Int?
+  status      EventStatus @default(UPCOMING)
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  participants EventParticipant[]
+  brackets     Bracket[]
+
+  @@index([sport])
+  @@index([status])
+  @@index([startDate])
+}
+
+enum EventType {
+  CAMP
+  TOURNAMENT
+  SHOWCASE
+  COMBINE
+  TRYOUT
+}
+
+enum EventStatus {
+  UPCOMING
+  ACTIVE
+  VOTING
+  COMPLETED
+  CANCELLED
+}
+
+model EventParticipant {
+  id        String            @id @default(cuid())
+  eventId   String
+  athleteId String
+  status    ParticipantStatus @default(REGISTERED)
+  seedRank  Int?
+  finalRank Int?
+  votes     Int               @default(0)
+  createdAt DateTime          @default(now())
+
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  matchupsAsAthlete1 Matchup[] @relation("Athlete1")
+  matchupsAsAthlete2 Matchup[] @relation("Athlete2")
+  wonMatchups        Matchup[] @relation("Winner")
+
+  @@unique([eventId, athleteId])
+  @@index([eventId])
+  @@index([athleteId])
+}
+
+enum ParticipantStatus {
+  REGISTERED
+  CONFIRMED
+  CHECKED_IN
+  ELIMINATED
+  ADVANCED
+  WINNER
+}
+
+model Bracket {
+  id       String    @id @default(cuid())
+  eventId  String
+  name     String    // e.g., "Main Bracket", "Consolation"
+  round    Int       @default(1)
+  matchups Matchup[]
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model Matchup {
+  id           String   @id @default(cuid())
+  bracketId    String
+  round        Int
+  position     Int      // Position within the round
+  athlete1Id   String?
+  athlete2Id   String?
+  winnerId     String?
+  athlete1Votes Int     @default(0)
+  athlete2Votes Int     @default(0)
+  votingOpen   Boolean  @default(false)
+  votingEndsAt DateTime?
+  completedAt  DateTime?
+
+  bracket  Bracket           @relation(fields: [bracketId], references: [id], onDelete: Cascade)
+  athlete1 EventParticipant? @relation("Athlete1", fields: [athlete1Id], references: [id])
+  athlete2 EventParticipant? @relation("Athlete2", fields: [athlete2Id], references: [id])
+  winner   EventParticipant? @relation("Winner", fields: [winnerId], references: [id])
+  votes    Vote[]
+
+  @@index([bracketId])
+  @@index([votingOpen])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  matchupId String
+  voterId   String   // Anonymous voter ID (from session or IP hash)
+  choice    Int      // 1 for athlete1, 2 for athlete2
+  createdAt DateTime @default(now())
+
+  matchup Matchup @relation(fields: [matchupId], references: [id], onDelete: Cascade)
+
+  @@unique([matchupId, voterId])
+  @@index([matchupId])
+}
