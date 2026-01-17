@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Moon, Sun, Trophy, User, LogOut } from 'lucide-react';
+import { Menu, Moon, Sun, LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,8 +18,8 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Athletes', href: '/athletes' },
   { name: 'Rankings', href: '/rankings' },
-  { name: 'Events', href: '/events' },
-  { name: 'Marketplace', href: '/marketplace' },
+  { name: 'Events', href: '/events', highlight: true },
+  { name: 'NIL Marketplace', href: '/marketplace' },
 ];
 
 export function Header({ user }: HeaderProps) {
@@ -31,15 +31,14 @@ export function Header({ user }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border glass-light">
+      <nav className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 font-bold text-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+          className="text-xl font-bold text-gradient-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
         >
-          <Trophy className="h-6 w-6 text-primary" aria-hidden="true" />
-          <span>AthletePlatform</span>
+          Overall 99
         </Link>
 
         {/* Desktop Navigation */}
@@ -49,10 +48,12 @@ export function Header({ user }: HeaderProps) {
               key={item.name}
               href={item.href}
               className={cn(
-                'text-sm font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md px-2 py-1',
-                pathname.startsWith(item.href)
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
+                'text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md px-2 py-1',
+                item.highlight
+                  ? 'text-amber-400 hover:text-amber-300 font-semibold'
+                  : pathname.startsWith(item.href)
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-primary'
               )}
             >
               {item.name}
@@ -97,12 +98,12 @@ export function Header({ user }: HeaderProps) {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                   Sign In
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="sm">Get Started</Button>
+                <Button size="sm" className="btn-primary-glow text-primary-foreground">Get Started</Button>
               </Link>
             </div>
           )}

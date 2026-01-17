@@ -4,7 +4,7 @@ import { LoginForm } from '@/components/auth/login-form';
 
 export const metadata: Metadata = {
   title: 'Sign In',
-  description: 'Sign in to your AthletePlatform account',
+  description: 'Sign in to your Overall 99 account',
 };
 
 export default function LoginPage() {

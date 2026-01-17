@@ -30,8 +30,8 @@ async function main() {
   // Create admin user
   const admin = await prisma.user.create({
     data: {
-      email: 'admin@athleteplatform.com',
-      name: 'Platform Admin',
+      email: 'admin@overall99.com',
+      name: 'Overall 99 Admin',
       password: hashedPassword,
       role: UserRole.ADMIN,
     },
@@ -347,16 +347,16 @@ async function main() {
   // Create CAM CAMP event
   const event = await prisma.event.create({
     data: {
-      name: 'Summer Basketball Showcase 2025',
-      description: 'Elite basketball showcase featuring top high school talent. Players will compete in a bracket-style tournament with fan voting.',
+      name: 'CAM CAMP Football Championship',
+      description: 'The ultimate high school football showcase. Elite players compete for the Player of the Year award in Las Vegas. Fan voting determines the finalists!',
       type: EventType.TOURNAMENT,
-      sport: 'Basketball',
-      location: 'Los Angeles, CA',
-      startDate: new Date('2025-07-15'),
-      endDate: new Date('2025-07-18'),
-      maxParticipants: 32,
+      sport: 'Football',
+      location: 'Las Vegas, NV',
+      startDate: new Date('2025-01-13'),
+      endDate: new Date('2025-01-15'),
+      maxParticipants: 64,
       status: EventStatus.UPCOMING,
-      imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc',
+      imageUrl: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390',
     },
   });
 

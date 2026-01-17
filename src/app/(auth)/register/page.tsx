@@ -4,7 +4,7 @@ import { RegisterForm } from '@/components/auth/register-form';
 
 export const metadata: Metadata = {
   title: 'Create Account',
-  description: 'Create your AthletePlatform account',
+  description: 'Create your Overall 99 account and start building your legacy',
 };
 
 export default function RegisterPage() {
