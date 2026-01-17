@@ -90,8 +90,8 @@ export function RegisterForm() {
         return;
       }
 
-      // Redirect to login on success
-      router.push('/login?registered=true');
+      // Redirect to onboarding wizard on success
+      router.push('/onboarding');
     } catch {
       setError('An unexpected error occurred');
     } finally {

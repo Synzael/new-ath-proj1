@@ -102,7 +102,7 @@ export function Header({ user }: HeaderProps) {
                   Sign In
                 </Button>
               </Link>
-              <Link href="/register">
+              <Link href="/onboarding">
                 <Button size="sm" className="btn-primary-glow text-primary-foreground">Get Started</Button>
               </Link>
             </div>

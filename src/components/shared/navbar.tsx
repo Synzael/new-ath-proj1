@@ -128,7 +128,7 @@ export function Navbar() {
                   <Link href="/login">Sign in</Link>
                 </Button>
                 <Button className="btn-primary-glow text-primary-foreground" asChild>
-                  <Link href="/register">Get Started</Link>
+                  <Link href="/onboarding">Get Started</Link>
                 </Button>
               </div>
             )}
@@ -214,7 +214,7 @@ export function Navbar() {
                         asChild
                         onClick={() => setIsOpen(false)}
                       >
-                        <Link href="/register">Get Started</Link>
+                        <Link href="/onboarding">Get Started</Link>
                       </Button>
                       <Button
                         variant="outline"

@@ -8,7 +8,7 @@ const footerLinks = {
     { name: 'Contact', href: '/contact' },
   ],
   athletes: [
-    { name: 'Create Profile', href: '/register' },
+    { name: 'Get Started', href: '/onboarding' },
     { name: 'Rankings', href: '/rankings' },
     { name: 'Events', href: '/events' },
     { name: 'NIL Marketplace', href: '/marketplace' },

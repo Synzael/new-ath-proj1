@@ -193,7 +193,7 @@ export default function HomePage() {
               in minutes and start connecting with opportunities.
             </p>
             <Button size="lg" className="btn-primary-glow text-primary-foreground font-semibold" asChild>
-              <Link href="/register">Create Your Profile</Link>
+              <Link href="/onboarding">Create Your Profile</Link>
             </Button>
           </div>
         </div>
