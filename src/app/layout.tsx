@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/shared/theme-provider';
-import { Header } from '@/components/shared/header';
+import { Providers } from '@/components/providers';
+import { Navbar } from '@/components/shared/navbar';
 import { Footer } from '@/components/shared/footer';
-import { getCurrentUser } from '@/lib/auth';
+import { FloatingHome } from '@/components/shared/floating-home';
 import './globals.css';
 
 const inter = Inter({
@@ -51,23 +51,22 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider defaultTheme="system" storageKey="athlete-platform-theme">
+        <Providers>
           <div className="relative flex min-h-screen flex-col">
-            <Header user={user} />
+            <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
+            <FloatingHome />
           </div>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
