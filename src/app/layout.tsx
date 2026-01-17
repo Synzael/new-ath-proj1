@@ -13,27 +13,27 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'AthletePlatform - Athlete Recruiting & NIL',
-    template: '%s | AthletePlatform',
+    default: 'Overall 99 - Build Their Legacy',
+    template: '%s | Overall 99',
   },
   description:
-    'The premier platform for athlete recruiting and NIL opportunities. Connect athletes with coaches, scouts, and brands.',
-  keywords: ['athlete', 'recruiting', 'NIL', 'sports', 'college', 'high school'],
-  authors: [{ name: 'AthletePlatform' }],
+    'The premier platform connecting athletes with college recruiters and NIL opportunities. Get discovered based on your performance, not just your highlight reel.',
+  keywords: ['athlete', 'recruiting', 'NIL', 'sports', 'college', 'high school', 'ratings', 'Overall 99'],
+  authors: [{ name: 'Overall 99' }],
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://athleteplatform.com',
-    siteName: 'AthletePlatform',
-    title: 'AthletePlatform - Athlete Recruiting & NIL',
+    url: 'https://overall99.com',
+    siteName: 'Overall 99',
+    title: 'Overall 99 - Build Their Legacy',
     description:
-      'The premier platform for athlete recruiting and NIL opportunities.',
+      'The premier platform connecting athletes with college recruiters and NIL opportunities.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AthletePlatform - Athlete Recruiting & NIL',
+    title: 'Overall 99 - Build Their Legacy',
     description:
-      'The premier platform for athlete recruiting and NIL opportunities.',
+      'The premier platform connecting athletes with college recruiters and NIL opportunities.',
   },
   robots: {
     index: true,

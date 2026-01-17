@@ -56,7 +56,7 @@ export function FloatingHome() {
           variant="outline"
           size="icon"
           onClick={scrollToTop}
-          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+          className="rounded-full shadow-lg glass hover:glass-strong border-border"
           aria-label="Scroll to top"
         >
           <ChevronUp className="h-5 w-5" />
@@ -67,7 +67,7 @@ export function FloatingHome() {
       <Button
         asChild
         size="icon"
-        className="rounded-full shadow-lg h-12 w-12"
+        className="rounded-full h-12 w-12 btn-primary-glow text-primary-foreground"
         aria-label="Go to homepage"
       >
         <Link href="/">
