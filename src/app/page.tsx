@@ -11,7 +11,7 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-balance">
               <span className="text-gradient-cyan">Build Their Legacy</span>
             </h1>
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -37,7 +37,11 @@ export default function HomePage() {
             <div className="glass-strong rounded-2xl p-6 md:p-8 glow-gold card-hover cursor-pointer border border-amber-500/30">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-2xl font-black text-black">
+                  <div
+                    className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-2xl font-black text-black"
+                    role="img"
+                    aria-label="CAM CAMP logo"
+                  >
                     CC
                   </div>
                   <div>
@@ -60,7 +64,7 @@ export default function HomePage() {
                     <div className="text-sm text-muted-foreground">Las Vegas Championship</div>
                   </div>
                   <Button className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold">
-                    Vote Now →
+                    Vote Now <span aria-hidden="true">→</span>
                   </Button>
                 </div>
               </div>
@@ -80,7 +84,7 @@ export default function HomePage() {
               { value: "99%", label: "Accuracy" },
             ].map((stat) => (
               <div key={stat.label} className="stat-card text-center card-hover">
-                <div className="text-3xl md:text-4xl font-bold text-gradient-cyan">{stat.value}</div>
+                <div className="text-3xl md:text-4xl font-bold text-gradient-cyan tabular-nums">{stat.value}</div>
                 <div className="text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
@@ -92,7 +96,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground">How It Works</h2>
+            <h2 className="text-3xl font-bold text-foreground text-balance">How It Works</h2>
             <p className="mt-4 text-muted-foreground">
               A transparent, data-driven approach to athletic recruiting
             </p>
@@ -131,7 +135,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6 text-foreground">
+              <h2 className="text-3xl font-bold mb-6 text-foreground text-balance">
                 Transparent <span className="text-gradient-cyan">Percentile Rating</span>
               </h2>
               <p className="text-muted-foreground mb-6">
@@ -147,7 +151,7 @@ export default function HomePage() {
                   { label: "Evaluations", weight: "10%", desc: "Coach and scout assessments" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-4">
-                    <div className="w-14 text-sm font-bold text-primary bg-primary/10 rounded-lg py-1 px-2 text-center">
+                    <div className="w-14 text-sm font-bold text-primary bg-primary/10 rounded-lg py-1 px-2 text-center tabular-nums">
                       {item.weight}
                     </div>
                     <div>
@@ -160,7 +164,7 @@ export default function HomePage() {
             </div>
             <div className="glass-strong rounded-xl p-8">
               <div className="text-center">
-                <div className="text-7xl font-bold text-gradient-cyan mb-2">99%</div>
+                <div className="text-7xl font-bold text-gradient-cyan mb-2 tabular-nums">99%</div>
                 <p className="text-xl font-bold text-foreground">Elite - #1 State Prospect</p>
                 <p className="text-muted-foreground mt-2">Top 1% of all athletes</p>
               </div>
@@ -173,7 +177,7 @@ export default function HomePage() {
                   { percentile: "65%", label: "High D1/Mid-Major", color: "percentile-70" },
                 ].map((tier) => (
                   <div key={tier.percentile} className="flex justify-between text-sm glass-light rounded-lg p-3">
-                    <span className={`font-bold ${tier.color}`}>{tier.percentile}</span>
+                    <span className={`font-bold tabular-nums ${tier.color}`}>{tier.percentile}</span>
                     <span className="text-muted-foreground">{tier.label}</span>
                   </div>
                 ))}
@@ -187,7 +191,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="glass-strong rounded-2xl p-12 text-center glow-cyan">
-            <h2 className="text-3xl font-bold mb-6 text-foreground">Ready to Get Discovered?</h2>
+            <h2 className="text-3xl font-bold mb-6 text-foreground text-balance">Ready to Get Discovered?</h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Join thousands of athletes already on the platform. Create your profile
               in minutes and start connecting with opportunities.

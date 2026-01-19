@@ -9,6 +9,9 @@ type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
+  attribute?: string;
+  enableSystem?: boolean;
+  disableTransitionOnChange?: boolean;
 };
 
 type ThemeProviderState = {
@@ -27,6 +30,10 @@ export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'overall99-theme',
+  // These props are accepted for compatibility but handled internally
+  attribute: _attribute,
+  enableSystem: _enableSystem,
+  disableTransitionOnChange: _disableTransitionOnChange,
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);

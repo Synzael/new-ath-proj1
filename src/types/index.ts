@@ -15,7 +15,14 @@ export interface SessionUser {
   role: UserRole;
 }
 
-// Extended user with relations
+// User with basic profile relations (from getUserWithProfile)
+export interface UserWithProfile extends User {
+  athlete?: (Athlete & { ratings?: Rating[] }) | null;
+  coach?: Coach | null;
+  brand?: Brand | null;
+}
+
+// Extended user with full relations
 export interface UserWithRelations extends User {
   athlete?: AthleteWithRelations | null;
   coach?: Coach | null;

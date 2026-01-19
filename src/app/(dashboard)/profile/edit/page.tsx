@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,7 +67,7 @@ const states = [
 ];
 
 export default function ProfileEditPage() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -78,7 +77,7 @@ export default function ProfileEditPage() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<AthleteProfileInput>({
     resolver: zodResolver(athleteProfileSchema),
     defaultValues: {
@@ -128,7 +127,7 @@ export default function ProfileEditPage() {
 
         toast.success("Profile updated successfully!");
         router.push("/dashboard");
-      } catch (error) {
+      } catch {
         toast.error("Failed to update profile. Please try again.");
       }
     });

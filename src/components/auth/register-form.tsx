@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -90,8 +91,21 @@ export function RegisterForm() {
         return;
       }
 
-      // Redirect to login on success
-      router.push('/login?registered=true');
+      // Auto-login and redirect to onboarding
+      const signInResult = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        // If auto-login fails, fall back to login page
+        router.push('/login?registered=true');
+        return;
+      }
+
+      // Redirect to onboarding on success
+      router.push('/onboarding');
     } catch {
       setError('An unexpected error occurred');
     } finally {
@@ -215,11 +229,11 @@ export function RegisterForm() {
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{' '}
-            <a href="/terms" className="underline hover:text-primary">
+            <a href="/terms" className="underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="/privacy" className="underline hover:text-primary">
+            <a href="/privacy" className="underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
               Privacy Policy
             </a>
           </p>

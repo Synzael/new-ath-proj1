@@ -13,7 +13,6 @@ export const authConfig: NextAuthConfig = {
       const isOnAthletes = nextUrl.pathname.startsWith('/athletes');
       const isOnEvents = nextUrl.pathname.startsWith('/events');
       const isOnMarketplace = nextUrl.pathname.startsWith('/marketplace');
-      const isOnRankings = nextUrl.pathname.startsWith('/rankings');
 
       const protectedRoutes = [isOnDashboard, isOnAthletes, isOnEvents, isOnMarketplace];
 

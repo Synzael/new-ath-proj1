@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber, formatPercent } from '@/lib/utils';
-import type { UserWithRelations } from '@/types';
+import type { UserWithProfile } from '@/types';
 
 interface AthleteDashboardProps {
-  user: UserWithRelations;
+  user: UserWithProfile;
 }
 
 export function AthleteDashboard({ user }: AthleteDashboardProps) {

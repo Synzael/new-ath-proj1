@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,7 +24,6 @@ import { getInitials } from "@/lib/utils";
 
 export function Navbar() {
   const { data: session, status } = useSession();
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   const initials = session?.user
@@ -82,7 +80,7 @@ export function Navbar() {
             ) : session?.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Open user menu">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={session.user.image || undefined}

@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber, formatCurrency } from '@/lib/utils';
-import type { UserWithRelations } from '@/types';
+import type { UserWithProfile } from '@/types';
 
 interface BrandDashboardProps {
-  user: UserWithRelations;
+  user: UserWithProfile;
 }
 
 export function BrandDashboard({ user }: BrandDashboardProps) {

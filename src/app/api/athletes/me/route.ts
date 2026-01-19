@@ -5,7 +5,7 @@ import { athleteProfileSchema } from "@/lib/validations";
 import { apiRateLimiter, getClientIp, RateLimitError, rateLimitResponse } from "@/lib/rate-limit";
 
 // GET /api/athletes/me - Get current user's athlete profile
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         },
         performanceStats: true,
         videos: true,
-        rating: true,
+        ratings: true,
       },
     });
 
@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest) {
             },
           },
           performanceStats: true,
-          rating: true,
+          ratings: true,
         },
       });
     } else {
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest) {
             },
           },
           performanceStats: true,
-          rating: true,
+          ratings: true,
         },
       });
     }

@@ -14,7 +14,7 @@ const defaultOptions: CacheOptions = {
 };
 
 // Generic cache factory
-export function createCache<T>(options: CacheOptions = {}) {
+export function createCache<T extends object>(options: CacheOptions = {}) {
   return new LRUCache<string, T>({
     max: options.max ?? defaultOptions.max!,
     ttl: options.ttl ?? defaultOptions.ttl!,
@@ -24,43 +24,43 @@ export function createCache<T>(options: CacheOptions = {}) {
 // Pre-configured caches for common use cases
 
 // Rankings cache - updates less frequently
-export const rankingsCache = createCache<unknown>({
+export const rankingsCache = createCache<object>({
   max: 100,
   ttl: 1000 * 60 * 10, // 10 minutes
 });
 
 // Athlete profile cache - frequently accessed
-export const athleteCache = createCache<unknown>({
+export const athleteCache = createCache<object>({
   max: 1000,
   ttl: 1000 * 60 * 5, // 5 minutes
 });
 
 // Rating calculations cache - expensive to compute
-export const ratingCache = createCache<unknown>({
+export const ratingCache = createCache<object>({
   max: 500,
   ttl: 1000 * 60 * 15, // 15 minutes
 });
 
 // Event data cache
-export const eventCache = createCache<unknown>({
+export const eventCache = createCache<object>({
   max: 100,
   ttl: 1000 * 60 * 2, // 2 minutes (events update more frequently)
 });
 
 // Helper functions for cache operations
-export function getCached<T>(cache: LRUCache<string, T>, key: string): T | undefined {
+export function getCached<T extends object>(cache: LRUCache<string, T>, key: string): T | undefined {
   return cache.get(key);
 }
 
-export function setCached<T>(cache: LRUCache<string, T>, key: string, value: T): void {
+export function setCached<T extends object>(cache: LRUCache<string, T>, key: string, value: T): void {
   cache.set(key, value);
 }
 
-export function invalidateCache<T>(cache: LRUCache<string, T>, key: string): void {
+export function invalidateCache<T extends object>(cache: LRUCache<string, T>, key: string): void {
   cache.delete(key);
 }
 
-export function invalidateCachePattern<T>(cache: LRUCache<string, T>, pattern: string): void {
+export function invalidateCachePattern<T extends object>(cache: LRUCache<string, T>, pattern: string): void {
   const regex = new RegExp(pattern);
   for (const key of cache.keys()) {
     if (regex.test(key)) {
@@ -70,14 +70,17 @@ export function invalidateCachePattern<T>(cache: LRUCache<string, T>, pattern: s
 }
 
 // Utility to wrap async functions with caching
+// Using 'any' for cache parameter to avoid type inference issues
+// The return type is inferred from the function parameter
 export function withCache<T, Args extends unknown[]>(
-  cache: LRUCache<string, T>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cache: LRUCache<string, any>,
   keyFn: (...args: Args) => string,
   fn: (...args: Args) => Promise<T>
 ): (...args: Args) => Promise<T> {
   return async (...args: Args): Promise<T> => {
     const key = keyFn(...args);
-    const cached = cache.get(key);
+    const cached = cache.get(key) as T | undefined;
     if (cached !== undefined) {
       return cached;
     }

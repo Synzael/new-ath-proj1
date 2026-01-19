@@ -1,10 +1,7 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Medal, Star, TrendingUp, Trophy } from "lucide-react";
 import { getInitials } from "@/lib/utils";
@@ -50,7 +47,7 @@ function getMedalColor(seed: number) {
   return "text-muted-foreground";
 }
 
-function FinalistCard({ athlete, index }: { athlete: typeof finalists.basketball[0]; index: number }) {
+function FinalistCard({ athlete }: { athlete: typeof finalists.basketball[0] }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="flex items-center gap-4 py-4">
@@ -102,8 +99,8 @@ function FinalistsList({ sport }: { sport: keyof typeof finalists }) {
 
   return (
     <div className="space-y-3">
-      {athletes.map((athlete, index) => (
-        <FinalistCard key={athlete.id} athlete={athlete} index={index} />
+      {athletes.map((athlete) => (
+        <FinalistCard key={athlete.id} athlete={athlete} />
       ))}
     </div>
   );

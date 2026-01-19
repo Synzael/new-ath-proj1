@@ -146,7 +146,7 @@ function calculateAcademicScore(gpa: number | null, sat: number | null, act: num
 
 // Calculate social score from total followers
 function calculateSocialScore(totalFollowers: number): number {
-  const { followersMin, followersMax } = NORMALIZATION.social;
+  const { followersMax } = NORMALIZATION.social;
   // Use logarithmic scale for followers (1K followers = ~30, 10K = ~50, 100K = ~70, 1M = 100)
   if (totalFollowers <= 0) return 0;
   const logScore = (Math.log10(totalFollowers) / Math.log10(followersMax)) * 100;

@@ -7,7 +7,9 @@ import { prisma } from './prisma';
 import type { UserRole, SessionUser } from '@/types';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // Using type assertion due to version mismatch between @auth/prisma-adapter and next-auth
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -119,7 +121,14 @@ export const getUserWithProfile = cache(async () => {
   const fullUser = await prisma.user.findUnique({
     where: { id: user.id },
     include: {
-      athlete: true,
+      athlete: {
+        include: {
+          ratings: {
+            orderBy: { calculatedAt: 'desc' },
+            take: 1,
+          },
+        },
+      },
       coach: true,
       brand: true,
     },

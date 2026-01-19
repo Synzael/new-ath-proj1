@@ -3,10 +3,10 @@ import { Users, Search, Star, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatNumber } from '@/lib/utils';
-import type { UserWithRelations } from '@/types';
+import type { UserWithProfile } from '@/types';
 
 interface CoachDashboardProps {
-  user: UserWithRelations;
+  user: UserWithProfile;
 }
 
 export function CoachDashboard({ user }: CoachDashboardProps) {

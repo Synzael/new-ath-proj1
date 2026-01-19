@@ -61,10 +61,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (params.minRating || params.maxRating) {
-      where.rating = {
-        overallScore: {
-          ...(params.minRating && { gte: params.minRating }),
-          ...(params.maxRating && { lte: params.maxRating }),
+      where.ratings = {
+        some: {
+          overallScore: {
+            ...(params.minRating && { gte: params.minRating }),
+            ...(params.maxRating && { lte: params.maxRating }),
+          },
         },
       };
     }
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
     let orderBy: any = {};
     switch (params.sortBy) {
       case "rating":
-        orderBy = { rating: { overallScore: params.sortOrder } };
+        orderBy = { ratings: { _count: params.sortOrder } };
         break;
       case "name":
         orderBy = { user: { name: params.sortOrder } };
@@ -82,7 +84,7 @@ export async function GET(request: NextRequest) {
         orderBy = { createdAt: params.sortOrder };
         break;
       default:
-        orderBy = { rating: { overallScore: "desc" } };
+        orderBy = { ratings: { _count: "desc" } };
     }
 
     // Calculate pagination
@@ -103,7 +105,7 @@ export async function GET(request: NextRequest) {
               image: true,
             },
           },
-          rating: {
+          ratings: {
             select: {
               overallScore: true,
               performanceScore: true,
@@ -112,6 +114,8 @@ export async function GET(request: NextRequest) {
               socialScore: true,
               evaluationScore: true,
             },
+            orderBy: { calculatedAt: 'desc' },
+            take: 1,
           },
         },
       }),

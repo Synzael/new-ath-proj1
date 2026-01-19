@@ -70,7 +70,7 @@ export default function NominatePage() {
     setValue("sport", athlete.sport);
   };
 
-  const onSubmit = (data: NominationForm) => {
+  const onSubmit = (_data: NominationForm) => {
     startTransition(async () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
