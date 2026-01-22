@@ -58,4 +58,9 @@ export const handlers = [
       ],
     });
   }),
+
+  // Onboarding handlers
+  http.post('/api/onboarding/complete', async () => {
+    return HttpResponse.json({ success: true });
+  }),
 ];
