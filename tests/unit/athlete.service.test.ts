@@ -49,6 +49,8 @@ import { athleteCache } from '@/lib/cache';
 import {
   getAthleteById,
   getAthleteByUserId,
+  getAthletes,
+  getTopAthletes,
   createAthlete,
   updateAthlete,
   addPerformanceStat,
@@ -391,6 +393,257 @@ describe('Athlete Service', () => {
         distinct: ['sport'],
         orderBy: { sport: 'asc' },
       });
+    });
+  });
+
+  describe('getAthletes', () => {
+    const mockAthletesList = [
+      {
+        id: 'athlete-1',
+        userId: 'user-1',
+        sport: 'Basketball',
+        position: 'Guard',
+        school: 'High School A',
+        state: 'CA',
+        classYear: 2025,
+        createdAt: new Date(),
+        user: { name: 'John Doe', image: null },
+        ratings: [{ overallScore: 85, percentile: 90 }],
+      },
+      {
+        id: 'athlete-2',
+        userId: 'user-2',
+        sport: 'Football',
+        position: 'QB',
+        school: 'High School B',
+        state: 'TX',
+        classYear: 2026,
+        createdAt: new Date(),
+        user: { name: 'Jane Smith', image: 'img.jpg' },
+        ratings: [],
+      },
+    ];
+
+    it('returns paginated athletes with default params', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue(mockAthletesList);
+      mockPrisma.athlete.count.mockResolvedValue(2);
+
+      const result = await getAthletes({}, 1, 20);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.pageSize).toBe(20);
+      expect(result.totalPages).toBe(1);
+    });
+
+    it('applies sport filter', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([mockAthletesList[0]]);
+      mockPrisma.athlete.count.mockResolvedValue(1);
+
+      await getAthletes({ sport: 'Basketball' }, 1, 20);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ sport: 'Basketball' }),
+        })
+      );
+    });
+
+    it('applies position filter', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+      mockPrisma.athlete.count.mockResolvedValue(0);
+
+      await getAthletes({ position: 'Guard' }, 1, 20);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ position: 'Guard' }),
+        })
+      );
+    });
+
+    it('applies state filter', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+      mockPrisma.athlete.count.mockResolvedValue(0);
+
+      await getAthletes({ state: 'CA' }, 1, 20);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ state: 'CA' }),
+        })
+      );
+    });
+
+    it('applies classYear filter', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+      mockPrisma.athlete.count.mockResolvedValue(0);
+
+      await getAthletes({ classYear: 2025 }, 1, 20);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ classYear: 2025 }),
+        })
+      );
+    });
+
+    it('applies search filter with OR clause', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+      mockPrisma.athlete.count.mockResolvedValue(0);
+
+      await getAthletes({ search: 'John' }, 1, 20);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({
+                user: { name: { contains: 'John', mode: 'insensitive' } },
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('maps athlete data to summaries correctly', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue(mockAthletesList);
+      mockPrisma.athlete.count.mockResolvedValue(2);
+
+      const result = await getAthletes({}, 1, 20);
+
+      expect(result.data[0]).toEqual(
+        expect.objectContaining({
+          id: 'athlete-1',
+          name: 'John Doe',
+          sport: 'Basketball',
+          overallRating: 85,
+          percentile: 90,
+        })
+      );
+      expect(result.data[1].overallRating).toBeNull();
+      expect(result.data[1].percentile).toBeNull();
+    });
+
+    it('handles athletes with no name', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([
+        { ...mockAthletesList[0], user: { name: null, image: null } },
+      ]);
+      mockPrisma.athlete.count.mockResolvedValue(1);
+
+      const result = await getAthletes({}, 1, 20);
+
+      expect(result.data[0].name).toBe('Unknown');
+    });
+
+    it('calculates pagination correctly', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+      mockPrisma.athlete.count.mockResolvedValue(55);
+
+      const result = await getAthletes({}, 3, 10);
+
+      expect(result.totalPages).toBe(6);
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 20, take: 10 })
+      );
+    });
+  });
+
+  describe('getTopAthletes', () => {
+    const mockRankedAthletes = [
+      {
+        id: 'a1',
+        userId: 'u1',
+        sport: 'Basketball',
+        position: 'Guard',
+        school: 'School A',
+        state: 'CA',
+        classYear: 2025,
+        user: { name: 'Top Player', image: null },
+        ratings: [{ overallScore: 95, percentile: 99 }],
+      },
+      {
+        id: 'a2',
+        userId: 'u2',
+        sport: 'Basketball',
+        position: 'Center',
+        school: 'School B',
+        state: 'TX',
+        classYear: 2025,
+        user: { name: 'Second Player', image: null },
+        ratings: [{ overallScore: 85, percentile: 80 }],
+      },
+      {
+        id: 'a3',
+        userId: 'u3',
+        sport: 'Basketball',
+        position: 'Forward',
+        school: 'School C',
+        state: 'FL',
+        classYear: 2026,
+        user: { name: 'No Rating', image: null },
+        ratings: [],
+      },
+    ];
+
+    it('returns ranked athletes sorted by score', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue(mockRankedAthletes);
+
+      const result = await getTopAthletes(null, 100);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].rank).toBe(1);
+      expect(result[0].overallRating).toBe(95);
+      expect(result[1].rank).toBe(2);
+      expect(result[1].overallRating).toBe(85);
+    });
+
+    it('filters out athletes with no ratings', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue(mockRankedAthletes);
+
+      const result = await getTopAthletes(null, 100);
+
+      const names = result.map((r) => r.name);
+      expect(names).not.toContain('No Rating');
+    });
+
+    it('applies sport filter', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+
+      await getTopAthletes('Basketball', 50);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sport: 'Basketball' },
+          take: 50,
+        })
+      );
+    });
+
+    it('passes empty where when sport is null', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([]);
+
+      await getTopAthletes(null, 100);
+
+      expect(mockPrisma.athlete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {},
+        })
+      );
+    });
+
+    it('handles athletes with null names', async () => {
+      mockPrisma.athlete.findMany.mockResolvedValue([
+        {
+          ...mockRankedAthletes[0],
+          user: { name: null, image: null },
+        },
+      ]);
+
+      const result = await getTopAthletes(null, 100);
+      expect(result[0].name).toBe('Unknown');
     });
   });
 

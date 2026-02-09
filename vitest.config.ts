@@ -21,6 +21,10 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         'src/types/**',
+        'src/components/ui/**', // shadcn UI components (auto-generated)
+        'src/app/**/page.tsx', // Next.js page wrappers (tested via E2E)
+        'src/app/**/layout.tsx', // Next.js layouts (tested via E2E)
+        'src/middleware.ts', // Next.js middleware (tested via E2E)
       ],
     },
   },
