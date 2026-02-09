@@ -135,4 +135,70 @@ describe('OnboardingFlow', () => {
       expect(screen.getByText('Sarah, what sport do you play?')).toBeInTheDocument();
     });
   });
+
+  it('calls onComplete callback after successful API completion', async () => {
+    const onComplete = vi.fn();
+    render(<OnboardingFlow onComplete={onComplete} />);
+    skipVideo();
+
+    // Complete presentation
+    const indicators = screen.getAllByRole('tab');
+    fireEvent.click(indicators[3]);
+    const input = screen.getByPlaceholderText('Enter your first name');
+    fireEvent.change(input, { target: { value: 'John' } });
+    fireEvent.click(screen.getByText('Continue'));
+
+    // Wait for sport selector
+    await waitFor(() => {
+      expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
+    });
+
+    // Select a sport
+    fireEvent.click(screen.getByText('Football'));
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not call onComplete on API failure', async () => {
+    server.use(
+      http.post('/api/onboarding/complete', () => {
+        return HttpResponse.json({ error: 'Server error' }, { status: 400 });
+      })
+    );
+
+    const onComplete = vi.fn();
+    render(<OnboardingFlow onComplete={onComplete} />);
+    skipVideo();
+
+    // Complete presentation
+    const indicators = screen.getAllByRole('tab');
+    fireEvent.click(indicators[3]);
+    const input = screen.getByPlaceholderText('Enter your first name');
+    fireEvent.change(input, { target: { value: 'John' } });
+    fireEvent.click(screen.getByText('Continue'));
+
+    // Wait for sport selector
+    await waitFor(() => {
+      expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
+    });
+
+    // Select a sport
+    fireEvent.click(screen.getByText('Soccer'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Server error')).toBeInTheDocument();
+    });
+
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('uses compact sizing when compact prop is passed', () => {
+    const { container } = render(<OnboardingFlow compact />);
+    // The video component should receive compact and use compact sizing
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-[400px]');
+    expect(wrapper.className).not.toContain('min-h-screen');
+  });
 });

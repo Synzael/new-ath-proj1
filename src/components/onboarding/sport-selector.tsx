@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface SportSelectorProps {
   firstName: string;
   onSelect: (sport: string) => void;
+  compact?: boolean;
 }
 
 const sports = [
@@ -25,7 +26,7 @@ const sports = [
   'Tennis',
 ] as const;
 
-export function SportSelector({ firstName, onSelect }: SportSelectorProps) {
+export function SportSelector({ firstName, onSelect, compact }: SportSelectorProps) {
   const [selectedSport, setSelectedSport] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -36,7 +37,10 @@ export function SportSelector({ firstName, onSelect }: SportSelectorProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex flex-col">
+    <div className={cn(
+      'bg-gradient-dark flex flex-col',
+      compact ? 'h-full min-h-[400px]' : 'min-h-screen'
+    )}>
       {/* Header */}
       <header className="flex items-center justify-end p-4">
         <Button

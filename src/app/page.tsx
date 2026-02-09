@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { OnboardingModal } from "@/components/onboarding/onboarding-modal";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background bg-gradient-radial">
+      <OnboardingModal />
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">
         {/* Background glow effect */}

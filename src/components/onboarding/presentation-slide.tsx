@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 interface PresentationSlideProps {
   onComplete: (firstName: string) => void;
   autoPlayInterval?: number;
+  compact?: boolean;
 }
 
 interface SlideContent {
@@ -52,7 +53,7 @@ const slides: SlideContent[] = [
   },
 ];
 
-export function PresentationSlide({ onComplete, autoPlayInterval = 5000 }: PresentationSlideProps) {
+export function PresentationSlide({ onComplete, autoPlayInterval = 5000, compact }: PresentationSlideProps) {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [firstName, setFirstName] = React.useState('');
 
@@ -96,7 +97,10 @@ export function PresentationSlide({ onComplete, autoPlayInterval = 5000 }: Prese
   const canProceed = isLastSlide ? firstName.trim().length > 0 : true;
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex flex-col">
+    <div className={cn(
+      'bg-gradient-dark flex flex-col',
+      compact ? 'h-full min-h-[400px]' : 'min-h-screen'
+    )}>
       {/* Progress bar */}
       <div className="p-4">
         <Progress value={progress} className="h-1" />

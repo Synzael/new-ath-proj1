@@ -2,12 +2,14 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface OnboardingVideoProps {
   onComplete: () => void;
+  compact?: boolean;
 }
 
-export function OnboardingVideo({ onComplete }: OnboardingVideoProps) {
+export function OnboardingVideo({ onComplete, compact }: OnboardingVideoProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [hasEnded, setHasEnded] = React.useState(false);
 
@@ -30,7 +32,10 @@ export function OnboardingVideo({ onComplete }: OnboardingVideoProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex flex-col items-center justify-center relative">
+    <div className={cn(
+      'bg-gradient-dark flex flex-col items-center justify-center relative',
+      compact ? 'h-full min-h-[400px]' : 'min-h-screen'
+    )}>
       <video
         ref={videoRef}
         src="/onboardingvideo.mp4"

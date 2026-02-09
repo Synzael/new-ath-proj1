@@ -170,6 +170,21 @@ describe('PresentationSlide', () => {
   });
 });
 
+describe('PresentationSlide compact mode', () => {
+  it('uses compact sizing when compact prop is true', () => {
+    const { container } = render(<PresentationSlide onComplete={vi.fn()} compact />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-[400px]');
+    expect(wrapper.className).not.toContain('min-h-screen');
+  });
+
+  it('uses full-screen sizing when compact is false', () => {
+    const { container } = render(<PresentationSlide onComplete={vi.fn()} />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-screen');
+  });
+});
+
 describe('PresentationSlide autoplay', () => {
   beforeEach(() => {
     vi.useFakeTimers();

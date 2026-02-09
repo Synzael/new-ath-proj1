@@ -58,6 +58,19 @@ describe('OnboardingVideo', () => {
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
   });
 
+  it('uses compact sizing when compact prop is true', () => {
+    const { container } = render(<OnboardingVideo onComplete={vi.fn()} compact />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-[400px]');
+    expect(wrapper.className).not.toContain('min-h-screen');
+  });
+
+  it('uses full-screen sizing when compact is false', () => {
+    const { container } = render(<OnboardingVideo onComplete={vi.fn()} />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-screen');
+  });
+
   it('mutes and retries when autoplay is blocked', async () => {
     const playMock = vi.spyOn(HTMLMediaElement.prototype, 'play')
       .mockImplementationOnce(() => Promise.reject(new Error('Autoplay blocked')))
