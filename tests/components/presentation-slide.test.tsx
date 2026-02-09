@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { PresentationSlide } from '@/components/onboarding/presentation-slide';
 
 describe('PresentationSlide', () => {
@@ -167,5 +167,103 @@ describe('PresentationSlide', () => {
 
     // Continue should be disabled
     expect(screen.getByText('Continue').closest('button')).toBeDisabled();
+  });
+});
+
+describe('PresentationSlide compact mode', () => {
+  it('uses compact sizing when compact prop is true', () => {
+    const { container } = render(<PresentationSlide onComplete={vi.fn()} compact />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-[400px]');
+    expect(wrapper.className).not.toContain('min-h-screen');
+  });
+
+  it('uses full-screen sizing when compact is false', () => {
+    const { container } = render(<PresentationSlide onComplete={vi.fn()} />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('min-h-screen');
+  });
+});
+
+describe('PresentationSlide autoplay', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('auto-advances to next slide after interval', () => {
+    render(<PresentationSlide onComplete={vi.fn()} />);
+    expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
+
+    act(() => { vi.advanceTimersByTime(5000); });
+
+    expect(screen.getByText('Get Discovered')).toBeInTheDocument();
+  });
+
+  it('auto-advances through multiple slides', () => {
+    render(<PresentationSlide onComplete={vi.fn()} />);
+
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(screen.getByText('Get Discovered')).toBeInTheDocument();
+
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(screen.getByText('NIL Opportunities')).toBeInTheDocument();
+  });
+
+  it('does NOT auto-advance on the last slide', () => {
+    render(<PresentationSlide onComplete={vi.fn()} />);
+
+    // Advance through 3 slides to reach last (name input)
+    act(() => { vi.advanceTimersByTime(5000); }); // slide 0 -> 1
+    act(() => { vi.advanceTimersByTime(5000); }); // slide 1 -> 2
+    act(() => { vi.advanceTimersByTime(5000); }); // slide 2 -> 3
+
+    expect(screen.getByText("Let's get started")).toBeInTheDocument();
+
+    // Wait extra time
+    act(() => { vi.advanceTimersByTime(10000); });
+
+    // Should still be on the last slide
+    expect(screen.getByText("Let's get started")).toBeInTheDocument();
+  });
+
+  it('resets timer when user manually navigates', () => {
+    render(<PresentationSlide onComplete={vi.fn()} />);
+
+    // Wait 3 seconds (should NOT auto-advance yet)
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
+
+    // Manually click Next
+    fireEvent.click(screen.getByText('Next'));
+    expect(screen.getByText('Get Discovered')).toBeInTheDocument();
+
+    // Timer should reset -- 3 more seconds should NOT advance
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText('Get Discovered')).toBeInTheDocument();
+
+    // Full 5 seconds after manual nav SHOULD advance
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText('NIL Opportunities')).toBeInTheDocument();
+  });
+
+  it('accepts custom autoPlayInterval prop', () => {
+    render(<PresentationSlide onComplete={vi.fn()} autoPlayInterval={3000} />);
+
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText('Get Discovered')).toBeInTheDocument();
+  });
+
+  it('cleans up timer on unmount', () => {
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+    const { unmount } = render(<PresentationSlide onComplete={vi.fn()} />);
+
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
   });
 });
