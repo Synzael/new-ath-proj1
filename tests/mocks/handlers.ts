@@ -1,13 +1,20 @@
 import { http, HttpResponse } from 'msw';
 
+interface RegisterBody {
+  email?: string;
+  name?: string;
+}
+
 export const handlers = [
   // Auth handlers
   http.post('/api/auth/register', async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as RegisterBody;
+    const email = body.email ?? 'unknown@example.com';
+    const name = body.name ?? 'Unknown';
     return HttpResponse.json({
       id: 'test-user-id',
-      email: (body as { email: string }).email,
-      name: (body as { name: string }).name,
+      email,
+      name,
     });
   }),
 
@@ -57,5 +64,10 @@ export const handlers = [
         { rank: 2, athleteId: '2', name: 'Jane Smith', score: 92.3 },
       ],
     });
+  }),
+
+  // Onboarding handlers
+  http.post('/api/onboarding/complete', async () => {
+    return HttpResponse.json({ success: true });
   }),
 ];
