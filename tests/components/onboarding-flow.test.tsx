@@ -12,19 +12,41 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+beforeEach(() => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
+});
+
+function skipVideo() {
+  fireEvent.click(screen.getByText('Skip'));
+}
+
 describe('OnboardingFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
   });
 
-  it('renders presentation phase initially', () => {
+  it('renders video phase initially', () => {
     render(<OnboardingFlow />);
+    expect(screen.getByLabelText('Onboarding introduction video')).toBeInTheDocument();
+  });
 
+  it('transitions from video to presentation when Skip is clicked', () => {
+    render(<OnboardingFlow />);
+    skipVideo();
+    expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
+  });
+
+  it('transitions from video to presentation when video ends', () => {
+    render(<OnboardingFlow />);
+    const video = screen.getByLabelText('Onboarding introduction video');
+    fireEvent.ended(video);
     expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
   });
 
   it('transitions to sport selection after presentation', async () => {
     render(<OnboardingFlow />);
+    skipVideo();
 
     // Navigate to last slide
     const indicators = screen.getAllByRole('tab');
@@ -45,6 +67,7 @@ describe('OnboardingFlow', () => {
 
   it('redirects to dashboard on successful completion', async () => {
     render(<OnboardingFlow />);
+    skipVideo();
 
     // Complete presentation
     const indicators = screen.getAllByRole('tab');
@@ -74,6 +97,7 @@ describe('OnboardingFlow', () => {
     );
 
     render(<OnboardingFlow />);
+    skipVideo();
 
     // Complete presentation
     const indicators = screen.getAllByRole('tab');
@@ -97,6 +121,7 @@ describe('OnboardingFlow', () => {
 
   it('preserves firstName across phase transition', async () => {
     render(<OnboardingFlow />);
+    skipVideo();
 
     // Complete presentation with specific name
     const indicators = screen.getAllByRole('tab');

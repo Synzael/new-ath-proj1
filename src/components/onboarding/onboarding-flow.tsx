@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { OnboardingVideo } from './onboarding-video';
 import { PresentationSlide } from './presentation-slide';
 import { SportSelector } from './sport-selector';
 
-type OnboardingPhase = 'presentation' | 'sport-selection';
+type OnboardingPhase = 'video' | 'presentation' | 'sport-selection';
 
 interface OnboardingState {
   phase: OnboardingPhase;
@@ -16,11 +17,15 @@ interface OnboardingState {
 export function OnboardingFlow() {
   const router = useRouter();
   const [state, setState] = React.useState<OnboardingState>({
-    phase: 'presentation',
+    phase: 'video',
     firstName: '',
     selectedSport: null,
   });
   const [error, setError] = React.useState<string | null>(null);
+
+  const handleVideoComplete = () => {
+    setState((prev) => ({ ...prev, phase: 'presentation' }));
+  };
 
   const handlePresentationComplete = (firstName: string) => {
     setState((prev) => ({
@@ -58,6 +63,10 @@ export function OnboardingFlow() {
       setState((prev) => ({ ...prev, selectedSport: null }));
     }
   };
+
+  if (state.phase === 'video') {
+    return <OnboardingVideo onComplete={handleVideoComplete} />;
+  }
 
   if (state.phase === 'presentation') {
     return <PresentationSlide onComplete={handlePresentationComplete} />;

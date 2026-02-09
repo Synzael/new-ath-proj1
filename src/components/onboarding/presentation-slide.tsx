@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 interface PresentationSlideProps {
   onComplete: (firstName: string) => void;
+  autoPlayInterval?: number;
 }
 
 interface SlideContent {
@@ -51,13 +52,24 @@ const slides: SlideContent[] = [
   },
 ];
 
-export function PresentationSlide({ onComplete }: PresentationSlideProps) {
+export function PresentationSlide({ onComplete, autoPlayInterval = 5000 }: PresentationSlideProps) {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [firstName, setFirstName] = React.useState('');
 
   const slide = slides[currentSlide];
   const isLastSlide = currentSlide === slides.length - 1;
   const progress = ((currentSlide + 1) / slides.length) * 100;
+
+  // Autoplay: auto-advance slides except the last one (name input)
+  React.useEffect(() => {
+    if (isLastSlide) return;
+
+    const timer = setTimeout(() => {
+      setCurrentSlide((prev) => prev + 1);
+    }, autoPlayInterval);
+
+    return () => clearTimeout(timer);
+  }, [currentSlide, isLastSlide, autoPlayInterval]);
 
   const handleNext = () => {
     if (isLastSlide) {

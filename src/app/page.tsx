@@ -25,6 +25,9 @@ export default function HomePage() {
               <Button size="lg" variant="secondary" className="glass" asChild>
                 <Link href="/marketplace">NIL Marketplace</Link>
               </Button>
+              <Button size="lg" variant="outline" className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10" asChild>
+                <Link href="/onboarding">New User</Link>
+              </Button>
             </div>
           </div>
         </div>
