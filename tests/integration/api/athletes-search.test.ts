@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/athletes/search/route';
-import { NextRequest } from 'next/server';
+import { createGetRequest } from '../../utils/request-helpers';
 
 // Mock prisma
 vi.mock('@/lib/prisma', () => ({
@@ -55,11 +55,7 @@ const mockAthletes = [
 ];
 
 function createRequest(params: Record<string, string> = {}) {
-  const url = new URL('http://localhost/api/athletes/search');
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-  return new NextRequest(url);
+  return createGetRequest('http://localhost/api/athletes/search', params);
 }
 
 describe('GET /api/athletes/search', () => {

@@ -18,6 +18,32 @@ vi.mock('next-auth/react', () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
+function fillRegistrationForm(overrides: {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+} = {}) {
+  const {
+    name = 'John Doe',
+    email = 'john@example.com',
+    password = 'password123',
+    confirmPassword,
+  } = overrides;
+  fireEvent.change(screen.getByLabelText('Full Name'), {
+    target: { value: name },
+  });
+  fireEvent.change(screen.getByLabelText('Email'), {
+    target: { value: email },
+  });
+  fireEvent.change(screen.getByLabelText(/^Password$/), {
+    target: { value: password },
+  });
+  fireEvent.change(screen.getByLabelText('Confirm Password'), {
+    target: { value: confirmPassword ?? password },
+  });
+}
+
 describe('RegisterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,18 +87,7 @@ describe('RegisterForm', () => {
   it('shows error for mismatched passwords', async () => {
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'different' },
-    });
+    fillRegistrationForm({ confirmPassword: 'different' });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
@@ -83,18 +98,7 @@ describe('RegisterForm', () => {
   it('shows error for short password', async () => {
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: '1234567' }, // 7 chars, needs 8
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: '1234567' },
-    });
+    fillRegistrationForm({ password: '1234567', confirmPassword: '1234567' });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
@@ -107,18 +111,7 @@ describe('RegisterForm', () => {
   it('redirects to onboarding on successful registration', async () => {
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'password123' },
-    });
+    fillRegistrationForm();
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
@@ -138,18 +131,7 @@ describe('RegisterForm', () => {
 
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'existing@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'password123' },
-    });
+    fillRegistrationForm({ email: 'existing@example.com' });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
@@ -160,7 +142,6 @@ describe('RegisterForm', () => {
   });
 
   it('shows loading state while registering', async () => {
-    // Make API call hang
     server.use(
       http.post('/api/auth/register', async () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -170,18 +151,7 @@ describe('RegisterForm', () => {
 
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'password123' },
-    });
+    fillRegistrationForm();
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
@@ -207,18 +177,7 @@ describe('RegisterForm', () => {
 
     render(<RegisterForm />);
 
-    fireEvent.change(screen.getByLabelText('Full Name'), {
-      target: { value: 'John Doe' },
-    });
-    fireEvent.change(screen.getByLabelText('Email'), {
-      target: { value: 'john@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Password$/), {
-      target: { value: 'password123' },
-    });
-    fireEvent.change(screen.getByLabelText('Confirm Password'), {
-      target: { value: 'password123' },
-    });
+    fillRegistrationForm();
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {

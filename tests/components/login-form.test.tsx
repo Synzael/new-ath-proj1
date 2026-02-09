@@ -115,12 +115,7 @@ describe('LoginForm', () => {
   });
 
   it('shows loading state while signing in', async () => {
-    let resolveSignIn: (value: unknown) => void;
-    mockSignIn.mockReturnValue(
-      new Promise((resolve) => {
-        resolveSignIn = resolve;
-      })
-    );
+    mockSignIn.mockReturnValue(new Promise(() => {}));
 
     render(<LoginForm />);
 
@@ -135,18 +130,10 @@ describe('LoginForm', () => {
     await waitFor(() => {
       expect(screen.getByText('Signing in...')).toBeInTheDocument();
     });
-
-    // Resolve the promise
-    resolveSignIn!({ error: null });
   });
 
   it('disables inputs while loading', async () => {
-    let resolveSignIn: (value: unknown) => void;
-    mockSignIn.mockReturnValue(
-      new Promise((resolve) => {
-        resolveSignIn = resolve;
-      })
-    );
+    mockSignIn.mockReturnValue(new Promise(() => {}));
 
     render(<LoginForm />);
 
@@ -162,9 +149,6 @@ describe('LoginForm', () => {
       expect(screen.getByLabelText('Email')).toBeDisabled();
       expect(screen.getByLabelText('Password')).toBeDisabled();
     });
-
-    // Resolve the promise
-    resolveSignIn!({ error: null });
   });
 
   it('clears error when input changes', async () => {

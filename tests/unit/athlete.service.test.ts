@@ -33,7 +33,9 @@ vi.mock('@/lib/cache', () => ({
   withCache: vi.fn((cache, keyFn, fn) => fn),
 }));
 
-// Mock React cache (returns the function as-is for testing)
+// Mock React cache — returns the function as-is so cached service functions
+// execute directly. This bypasses deduplication/memoization behavior;
+// cache-specific logic should be tested separately if needed.
 vi.mock('react', async () => {
   const actual = await vi.importActual('react');
   return {
@@ -301,7 +303,17 @@ describe('Athlete Service', () => {
     });
 
     it('creates video with all fields', async () => {
-      mockPrisma.video.create.mockResolvedValue({});
+      mockPrisma.video.create.mockResolvedValue({
+        id: 'video-456',
+        athleteId: 'athlete-123',
+        title: 'Full Game',
+        url: 'https://youtube.com/watch?v=456',
+        thumbnailUrl: 'https://img.youtube.com/thumb.jpg',
+        duration: 3600,
+        category: 'Full Game',
+        description: 'Championship game',
+        featured: true,
+      });
 
       await addVideo('athlete-123', {
         title: 'Full Game',

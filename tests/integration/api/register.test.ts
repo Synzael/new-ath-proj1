@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/auth/register/route';
-import { NextRequest } from 'next/server';
+import { createPostRequest } from '../../utils/request-helpers';
 
 // Mock prisma
 vi.mock('@/lib/prisma', () => ({
@@ -27,11 +27,7 @@ const mockPrisma = prisma as unknown as {
 };
 
 function createRequest(body: unknown) {
-  return new NextRequest('http://localhost/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return createPostRequest('http://localhost/api/auth/register', body);
 }
 
 describe('POST /api/auth/register', () => {
@@ -159,7 +155,7 @@ describe('POST /api/auth/register', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBeDefined();
+    expect(data.error).toMatch(/invalid|role/i);
   });
 
   it('returns 400 for missing required fields', async () => {
@@ -172,7 +168,7 @@ describe('POST /api/auth/register', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBeDefined();
+    expect(data.error).toMatch(/required|email|password|role/i);
   });
 
   it('creates COACH user successfully', async () => {

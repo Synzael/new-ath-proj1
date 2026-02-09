@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/onboarding/complete/route';
-import { NextRequest } from 'next/server';
+import { createPostRequest } from '../../utils/request-helpers';
 
 // Mock auth
 vi.mock('@/lib/auth', () => ({
@@ -37,11 +37,7 @@ const mockPrisma = prisma as unknown as {
 };
 
 function createRequest(body: unknown) {
-  return new NextRequest('http://localhost/api/onboarding/complete', {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return createPostRequest('http://localhost/api/onboarding/complete', body);
 }
 
 describe('POST /api/onboarding/complete', () => {
@@ -180,7 +176,7 @@ describe('POST /api/onboarding/complete', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBeDefined(); // Zod returns 'Required' for missing fields
+    expect(data.error).toMatch(/required|firstName/i);
   });
 
   it('returns 400 when sport is missing', async () => {
@@ -197,7 +193,7 @@ describe('POST /api/onboarding/complete', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBeDefined(); // Zod returns 'Required' for missing fields
+    expect(data.error).toMatch(/required|sport/i);
   });
 
   it('returns 400 for empty firstName', async () => {

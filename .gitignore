@@ -44,3 +44,10 @@ prisma/migrations/**/migration_lock.toml
 .vscode
 *.swp
 *.swo
+
+# Backups
+*.bak
+*.backup
+
+# Claude Code local configs
+.claude/

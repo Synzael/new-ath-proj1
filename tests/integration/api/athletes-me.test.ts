@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, PATCH } from '@/app/api/athletes/me/route';
 import { NextRequest } from 'next/server';
+import { createPatchRequest as createPatchReq } from '../../utils/request-helpers';
 
 // Mock auth
 vi.mock('@/lib/auth', () => ({
@@ -124,11 +125,7 @@ describe('PATCH /api/athletes/me', () => {
   });
 
   function createPatchRequest(body: unknown) {
-    return new NextRequest('http://localhost/api/athletes/me', {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return createPatchReq('http://localhost/api/athletes/me', body);
   }
 
   it('updates existing athlete profile', async () => {
