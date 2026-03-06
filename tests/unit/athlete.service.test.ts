@@ -645,6 +645,24 @@ describe('Athlete Service', () => {
       const result = await getTopAthletes(null, 100);
       expect(result[0].name).toBe('Unknown');
     });
+
+    it('returns sample rankings when database lookup fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockPrisma.athlete.findMany.mockRejectedValue(new Error('database down'));
+
+      const result = await getTopAthletes(null, 5);
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(result).toHaveLength(5);
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          rank: 1,
+          id: 'demo-athlete-1',
+          name: 'Mason Carter',
+        })
+      );
+      consoleErrorSpy.mockRestore();
+    });
   });
 
   describe('getStates', () => {

@@ -3,6 +3,192 @@ import { prisma } from '@/lib/prisma';
 import { athleteCache, withCache } from '@/lib/cache';
 import type { AthleteSummary, AthleteFilters, PaginatedResponse } from '@/types';
 
+type RankedAthleteRow = {
+  rank: number;
+  id: string;
+  userId: string;
+  name: string;
+  image: string | null;
+  sport: string;
+  position: string | null;
+  school: string | null;
+  state: string | null;
+  classYear: number | null;
+  overallRating: number;
+  percentile: number;
+};
+
+const sampleRankingsSeed: Omit<RankedAthleteRow, 'rank'>[] = [
+  {
+    id: 'demo-athlete-1',
+    userId: 'demo-user-1',
+    name: 'Mason Carter',
+    image: null,
+    sport: 'Football',
+    position: 'Quarterback',
+    school: 'Westlake High',
+    state: 'TX',
+    classYear: 2027,
+    overallRating: 98.2,
+    percentile: 99,
+  },
+  {
+    id: 'demo-athlete-2',
+    userId: 'demo-user-2',
+    name: 'Jalen Brooks',
+    image: null,
+    sport: 'Football',
+    position: 'Wide Receiver',
+    school: 'Bishop Gorman',
+    state: 'NV',
+    classYear: 2026,
+    overallRating: 96.7,
+    percentile: 98,
+  },
+  {
+    id: 'demo-athlete-3',
+    userId: 'demo-user-3',
+    name: 'Avery Thompson',
+    image: null,
+    sport: 'Basketball',
+    position: 'Point Guard',
+    school: 'Sierra Canyon',
+    state: 'CA',
+    classYear: 2026,
+    overallRating: 95.9,
+    percentile: 97,
+  },
+  {
+    id: 'demo-athlete-4',
+    userId: 'demo-user-4',
+    name: 'Jordan Lewis',
+    image: null,
+    sport: 'Basketball',
+    position: 'Forward',
+    school: 'Oak Hill Academy',
+    state: 'VA',
+    classYear: 2027,
+    overallRating: 94.8,
+    percentile: 96,
+  },
+  {
+    id: 'demo-athlete-5',
+    userId: 'demo-user-5',
+    name: 'Diego Ramirez',
+    image: null,
+    sport: 'Soccer',
+    position: 'Midfielder',
+    school: 'IMG Academy',
+    state: 'FL',
+    classYear: 2026,
+    overallRating: 93.6,
+    percentile: 95,
+  },
+  {
+    id: 'demo-athlete-6',
+    userId: 'demo-user-6',
+    name: 'Liam Foster',
+    image: null,
+    sport: 'Baseball',
+    position: 'Pitcher',
+    school: 'Orange Lutheran',
+    state: 'CA',
+    classYear: 2027,
+    overallRating: 92.9,
+    percentile: 94,
+  },
+  {
+    id: 'demo-athlete-7',
+    userId: 'demo-user-7',
+    name: 'Noah Bennett',
+    image: null,
+    sport: 'Track & Field',
+    position: 'Sprinter',
+    school: 'St. Thomas Aquinas',
+    state: 'FL',
+    classYear: 2026,
+    overallRating: 91.8,
+    percentile: 93,
+  },
+  {
+    id: 'demo-athlete-8',
+    userId: 'demo-user-8',
+    name: 'Ethan Wallace',
+    image: null,
+    sport: 'Football',
+    position: 'Linebacker',
+    school: 'Mater Dei',
+    state: 'CA',
+    classYear: 2027,
+    overallRating: 90.7,
+    percentile: 91,
+  },
+  {
+    id: 'demo-athlete-9',
+    userId: 'demo-user-9',
+    name: 'Olivia Reed',
+    image: null,
+    sport: 'Volleyball',
+    position: 'Outside Hitter',
+    school: 'Punahou School',
+    state: 'HI',
+    classYear: 2026,
+    overallRating: 89.9,
+    percentile: 90,
+  },
+  {
+    id: 'demo-athlete-10',
+    userId: 'demo-user-10',
+    name: 'Kennedy Price',
+    image: null,
+    sport: 'Softball',
+    position: 'Shortstop',
+    school: 'Lakewood Ranch',
+    state: 'FL',
+    classYear: 2027,
+    overallRating: 88.9,
+    percentile: 88,
+  },
+  {
+    id: 'demo-athlete-11',
+    userId: 'demo-user-11',
+    name: 'Ryan Patel',
+    image: null,
+    sport: 'Wrestling',
+    position: '157 lbs',
+    school: 'Wyoming Seminary',
+    state: 'PA',
+    classYear: 2026,
+    overallRating: 88.1,
+    percentile: 87,
+  },
+  {
+    id: 'demo-athlete-12',
+    userId: 'demo-user-12',
+    name: 'Caleb Rivers',
+    image: null,
+    sport: 'Football',
+    position: 'Running Back',
+    school: 'De La Salle',
+    state: 'CA',
+    classYear: 2027,
+    overallRating: 87.5,
+    percentile: 86,
+  },
+];
+
+function getSampleTopAthletes(sport: string | null, limit: number): RankedAthleteRow[] {
+  const normalizedSport = sport?.trim().toLowerCase();
+  const filtered = normalizedSport
+    ? sampleRankingsSeed.filter((athlete) => athlete.sport.toLowerCase() === normalizedSport)
+    : sampleRankingsSeed;
+
+  return filtered.slice(0, limit).map((athlete, index) => ({
+    ...athlete,
+    rank: index + 1,
+  }));
+}
+
 // Get athlete by ID with React.cache for per-request deduplication
 export const getAthleteById = cache(async (id: string) => {
   const athlete = await prisma.athlete.findUnique({
@@ -149,51 +335,61 @@ export const getTopAthletes = withCache(
   athleteCache,
   (sport: string | null, limit: number) => `top-athletes:${sport || 'all'}:${limit}`,
   async (sport: string | null = null, limit: number = 100) => {
-    const where: Record<string, unknown> = {};
-    if (sport) {
-      where.sport = sport;
-    }
+    try {
+      const where: Record<string, unknown> = {};
+      if (sport) {
+        where.sport = sport;
+      }
 
-    const athletes = await prisma.athlete.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            name: true,
-            image: true,
+      const athletes = await prisma.athlete.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
+          ratings: {
+            orderBy: { calculatedAt: 'desc' },
+            take: 1,
           },
         },
-        ratings: {
-          orderBy: { calculatedAt: 'desc' },
-          take: 1,
+        orderBy: {
+          ratings: {
+            _count: 'desc',
+          },
         },
-      },
-      orderBy: {
-        ratings: {
-          _count: 'desc',
-        },
-      },
-      take: limit,
-    });
+        take: limit,
+      });
 
-    // Sort by rating score
-    return athletes
-      .filter((a) => a.ratings.length > 0)
-      .sort((a, b) => (b.ratings[0]?.overallScore || 0) - (a.ratings[0]?.overallScore || 0))
-      .map((athlete, index) => ({
-        rank: index + 1,
-        id: athlete.id,
-        userId: athlete.userId,
-        name: athlete.user.name || 'Unknown',
-        image: athlete.user.image,
-        sport: athlete.sport,
-        position: athlete.position,
-        school: athlete.school,
-        state: athlete.state,
-        classYear: athlete.classYear,
-        overallRating: athlete.ratings[0]?.overallScore || 0,
-        percentile: athlete.ratings[0]?.percentile || 0,
-      }));
+      const ranked = athletes
+        .filter((a) => a.ratings.length > 0)
+        .sort((a, b) => (b.ratings[0]?.overallScore || 0) - (a.ratings[0]?.overallScore || 0))
+        .map((athlete, index) => ({
+          rank: index + 1,
+          id: athlete.id,
+          userId: athlete.userId,
+          name: athlete.user.name || 'Unknown',
+          image: athlete.user.image,
+          sport: athlete.sport,
+          position: athlete.position,
+          school: athlete.school,
+          state: athlete.state,
+          classYear: athlete.classYear,
+          overallRating: athlete.ratings[0]?.overallScore || 0,
+          percentile: athlete.ratings[0]?.percentile || 0,
+        }));
+
+      if (ranked.length > 0) {
+        return ranked;
+      }
+
+      return getSampleTopAthletes(sport, limit);
+    } catch (error) {
+      console.error('Failed to load rankings from database, using sample rankings:', error);
+      return getSampleTopAthletes(sport, limit);
+    }
   }
 );
 

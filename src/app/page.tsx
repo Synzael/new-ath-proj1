@@ -98,31 +98,36 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
+      <section id="how-it-works" className="py-20 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground text-balance">How It Works</h2>
             <p className="mt-4 text-muted-foreground">
-              A transparent, data-driven approach to athletic recruiting
+              A clear path from athlete profile to recruiting and NIL opportunities
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 step: "01",
-                title: "Create Your Profile",
-                desc: "Build a comprehensive profile with your stats, achievements, highlight videos, and academic information.",
+                title: "Create Profile",
+                desc: "Build your athlete profile with position, school, class year, verified measurables, and game film.",
               },
               {
                 step: "02",
-                title: "Get Your Rating",
-                desc: "Our transparent algorithm analyzes your performance, physical attributes, academics, and NIL potential.",
+                title: "Get Evaluated / Attend CAM CAMP",
+                desc: "Add verified camp metrics and event results to strengthen your recruiting profile.",
               },
               {
                 step: "03",
-                title: "Get Discovered",
-                desc: "Coaches and brands search our directory to find athletes that match their criteria. Your profile works for you 24/7.",
+                title: "Connect with Recruiters",
+                desc: "College programs browse rankings and athlete profiles to identify talent by region, sport, and position.",
+              },
+              {
+                step: "04",
+                title: "Explore NIL Marketplace",
+                desc: "Discover brand opportunities and express interest in partnerships that match your goals.",
               },
             ].map((feature) => (
               <div key={feature.step} className="glass rounded-xl p-8 card-hover">
@@ -136,24 +141,28 @@ export default function HomePage() {
       </section>
 
       {/* Rating System Section */}
-      <section className="py-20">
+      <section id="rating-system" className="py-20 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl font-bold mb-6 text-foreground text-balance">
-                Transparent <span className="text-gradient-cyan">Percentile Rating</span>
+                How the <span className="text-gradient-cyan">Overall 99 Rating</span> Works
               </h2>
               <p className="text-muted-foreground mb-6">
-                Unlike other platforms, we show you exactly how your rating is calculated.
-                Our weighted algorithm considers multiple factors:
+                Overall 99 combines verified camp metrics, scout evaluations, and on-field performance
+                into one platform rating to help athletes compare progress over time.
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Ratings are directional and informational. They are not a guarantee of scholarships,
+                roster spots, or NIL outcomes.
               </p>
               <div className="space-y-4">
                 {[
-                  { label: "Performance Metrics", weight: "40%", desc: "On-field achievements and stats" },
-                  { label: "Physical Attributes", weight: "20%", desc: "Measurables and athletic profile" },
-                  { label: "Academic Standing", weight: "15%", desc: "GPA and eligibility status" },
-                  { label: "Social/NIL Potential", weight: "15%", desc: "Social media presence and marketability" },
-                  { label: "Evaluations", weight: "10%", desc: "Coach and scout assessments" },
+                  { label: "Verified Camp Metrics", weight: "35%", desc: "Times, jumps, agility results, and event testing" },
+                  { label: "Scout Evaluations", weight: "25%", desc: "Independent evaluations and camp observations" },
+                  { label: "On-Field Performance", weight: "25%", desc: "Production trends, consistency, and game impact" },
+                  { label: "Academic Readiness", weight: "10%", desc: "Academic standing and eligibility readiness" },
+                  { label: "Leadership & NIL Profile", weight: "5%", desc: "Character indicators, communication, and brand fit" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-4">
                     <div className="w-14 text-sm font-bold text-primary bg-primary/10 rounded-lg py-1 px-2 text-center tabular-nums">
