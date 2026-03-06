@@ -16,6 +16,10 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
+    socialLink: {
+      deleteMany: vi.fn(),
+      upsert: vi.fn(),
+    },
   },
 }));
 
@@ -39,6 +43,10 @@ const mockPrisma = prisma as unknown as {
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
+  socialLink: {
+    deleteMany: ReturnType<typeof vi.fn>;
+    upsert: ReturnType<typeof vi.fn>;
+  };
 };
 
 const mockAthleteProfile = {
@@ -56,6 +64,7 @@ const mockAthleteProfile = {
   },
   performanceStats: [],
   videos: [],
+  socialLinks: [],
   ratings: [],
 };
 
@@ -66,7 +75,7 @@ describe('GET /api/athletes/me', () => {
 
   it('returns athlete profile for authenticated user', async () => {
     mockAuth.mockResolvedValue({
-      user: { id: 'user-123' },
+      user: { id: 'user-123', role: 'ATHLETE' },
     });
     mockPrisma.athlete.findUnique.mockResolvedValue(mockAthleteProfile);
 
@@ -106,7 +115,7 @@ describe('GET /api/athletes/me', () => {
 
   it('returns 404 when athlete profile not found', async () => {
     mockAuth.mockResolvedValue({
-      user: { id: 'user-123' },
+      user: { id: 'user-123', role: 'ATHLETE' },
     });
     mockPrisma.athlete.findUnique.mockResolvedValue(null);
 
@@ -130,13 +139,19 @@ describe('PATCH /api/athletes/me', () => {
 
   it('updates existing athlete profile', async () => {
     mockAuth.mockResolvedValue({
-      user: { id: 'user-123' },
+      user: { id: 'user-123', role: 'ATHLETE' },
     });
     mockPrisma.athlete.findUnique.mockResolvedValue(mockAthleteProfile);
     mockPrisma.athlete.update.mockResolvedValue({
       ...mockAthleteProfile,
       bio: 'Updated bio',
       school: 'New University',
+    });
+    mockPrisma.athlete.findUnique.mockResolvedValueOnce(mockAthleteProfile).mockResolvedValueOnce({
+      ...mockAthleteProfile,
+      bio: 'Updated bio',
+      school: 'New University',
+      socialLinks: [],
     });
 
     const request = createPatchRequest({
@@ -150,14 +165,34 @@ describe('PATCH /api/athletes/me', () => {
     expect(response.status).toBe(200);
     expect(data.bio).toBe('Updated bio');
     expect(data.school).toBe('New University');
-    expect(mockPrisma.athlete.update).toHaveBeenCalled();
+    expect(mockPrisma.athlete.update).toHaveBeenCalledWith({
+      where: { userId: 'user-123' },
+      data: expect.objectContaining({
+        bio: 'Updated bio',
+        school: 'New University',
+      }),
+    });
   });
 
   it('creates athlete profile if it does not exist', async () => {
     mockAuth.mockResolvedValue({
-      user: { id: 'user-456' },
+      user: { id: 'user-456', role: 'ATHLETE' },
     });
-    mockPrisma.athlete.findUnique.mockResolvedValue(null);
+    mockPrisma.athlete.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'new-athlete-123',
+      userId: 'user-456',
+      sport: 'Football',
+      socialLinks: [],
+      user: {
+        id: 'user-456',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        image: null,
+      },
+      performanceStats: [],
+      videos: [],
+      ratings: [],
+    });
     mockPrisma.athlete.create.mockResolvedValue({
       id: 'new-athlete-123',
       userId: 'user-456',
@@ -169,6 +204,8 @@ describe('PATCH /api/athletes/me', () => {
         image: null,
       },
       performanceStats: [],
+      videos: [],
+      socialLinks: [],
       ratings: [],
     });
 
@@ -182,6 +219,57 @@ describe('PATCH /api/athletes/me', () => {
     expect(response.status).toBe(200);
     expect(data.sport).toBe('Football');
     expect(mockPrisma.athlete.create).toHaveBeenCalled();
+  });
+
+  it('persists social links separately from athlete fields', async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: 'user-123', role: 'ATHLETE' },
+    });
+    mockPrisma.athlete.findUnique.mockResolvedValueOnce(mockAthleteProfile).mockResolvedValueOnce({
+      ...mockAthleteProfile,
+      socialLinks: [
+        {
+          id: 'sl-1',
+          athleteId: 'athlete-123',
+          platform: 'Instagram',
+          url: 'https://instagram.com/john',
+          followers: null,
+        },
+      ],
+    });
+
+    const request = createPatchRequest({
+      instagram: 'https://instagram.com/john',
+      graduationYear: 2028,
+    });
+
+    const response = await PATCH(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockPrisma.athlete.update).toHaveBeenCalledWith({
+      where: { userId: 'user-123' },
+      data: expect.objectContaining({
+        classYear: 2028,
+      }),
+    });
+    expect(mockPrisma.socialLink.upsert).toHaveBeenCalledWith({
+      where: {
+        athleteId_platform: {
+          athleteId: 'athlete-123',
+          platform: 'Instagram',
+        },
+      },
+      update: {
+        url: 'https://instagram.com/john',
+      },
+      create: {
+        athleteId: 'athlete-123',
+        platform: 'Instagram',
+        url: 'https://instagram.com/john',
+      },
+    });
+    expect(data.socialLinks).toHaveLength(1);
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -200,9 +288,13 @@ describe('PATCH /api/athletes/me', () => {
 
   it('updates partial fields only', async () => {
     mockAuth.mockResolvedValue({
-      user: { id: 'user-123' },
+      user: { id: 'user-123', role: 'ATHLETE' },
     });
-    mockPrisma.athlete.findUnique.mockResolvedValue(mockAthleteProfile);
+    mockPrisma.athlete.findUnique.mockResolvedValueOnce(mockAthleteProfile).mockResolvedValueOnce({
+      ...mockAthleteProfile,
+      gpa: 3.8,
+      socialLinks: [],
+    });
     mockPrisma.athlete.update.mockResolvedValue({
       ...mockAthleteProfile,
       gpa: 3.8,
@@ -217,5 +309,21 @@ describe('PATCH /api/athletes/me', () => {
 
     expect(response.status).toBe(200);
     expect(data.gpa).toBe(3.8);
+  });
+
+  it('returns 403 for non-athlete users', async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: 'user-123', role: 'COACH' },
+    });
+
+    const request = createPatchRequest({
+      bio: 'Updated bio',
+    });
+
+    const response = await PATCH(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe('Only athletes can update athlete profiles');
   });
 });

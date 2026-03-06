@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState, useTransition } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Camera,
@@ -32,74 +32,87 @@ import {
   Instagram,
   Twitter,
   Youtube,
-} from "lucide-react";
-import Link from "next/link";
-import { athleteProfileSchema, type AthleteProfileInput } from "@/lib/validations";
-import { getInitials } from "@/lib/utils";
-
-const sports = [
-  "Basketball",
-  "Football",
-  "Soccer",
-  "Baseball",
-  "Track & Field",
-  "Swimming",
-  "Volleyball",
-  "Tennis",
-  "Wrestling",
-  "Lacrosse",
-];
-
-const positions = {
-  Basketball: ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"],
-  Football: ["Quarterback", "Running Back", "Wide Receiver", "Tight End", "Offensive Line", "Defensive Line", "Linebacker", "Cornerback", "Safety"],
-  Soccer: ["Goalkeeper", "Defender", "Midfielder", "Forward"],
-  Baseball: ["Pitcher", "Catcher", "First Base", "Second Base", "Shortstop", "Third Base", "Outfield"],
-  Volleyball: ["Setter", "Outside Hitter", "Middle Blocker", "Opposite", "Libero"],
-};
-
-const states = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-];
+} from 'lucide-react';
+import Link from 'next/link';
+import { athleteProfileSchema, type AthleteProfileInput } from '@/lib/validations';
+import { mapAthleteRecordToFormValues } from '@/lib/athlete-profile';
+import { PROFILE_SPORTS, SPORT_POSITIONS, US_STATES } from '@/lib/profile-options';
+import { getInitials } from '@/lib/utils';
 
 export default function ProfileEditPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<AthleteProfileInput>({
     resolver: zodResolver(athleteProfileSchema),
     defaultValues: {
-      bio: "",
-      sport: "",
-      position: "",
+      bio: '',
+      sport: '',
+      position: '',
       height: undefined,
       weight: undefined,
-      school: "",
+      school: '',
       graduationYear: undefined,
       gpa: undefined,
-      city: "",
-      state: "",
-      instagram: "",
-      twitter: "",
-      tiktok: "",
-      youtube: "",
+      city: '',
+      state: '',
+      instagram: '',
+      twitter: '',
+      tiktok: '',
+      youtube: '',
     },
   });
 
-  const selectedSport = watch("sport");
-  const availablePositions = positions[selectedSport as keyof typeof positions] || [];
+  const selectedSport = watch('sport');
+  const availablePositions = SPORT_POSITIONS[selectedSport] || [];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/athletes/me');
+
+        if (response.status === 404) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load profile');
+        }
+
+        const athlete = await response.json();
+
+        if (!isMounted) {
+          return;
+        }
+
+        reset(mapAthleteRecordToFormValues(athlete));
+      } catch {
+        toast.error('Could not load your current profile.');
+      } finally {
+        if (isMounted) {
+          setIsLoadingProfile(false);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reset]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -115,28 +128,46 @@ export default function ProfileEditPage() {
   const onSubmit = (data: AthleteProfileInput) => {
     startTransition(async () => {
       try {
-        const response = await fetch("/api/athletes/me", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/athletes/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update profile");
+          throw new Error('Failed to update profile');
         }
 
-        toast.success("Profile updated successfully!");
-        router.push("/dashboard");
+        toast.success('Profile updated successfully!');
+        router.push('/dashboard');
       } catch {
-        toast.error("Failed to update profile. Please try again.");
+        toast.error('Failed to update profile. Please try again.');
       }
     });
   };
 
+  if (isLoadingProfile) {
+    return (
+      <div className="container max-w-4xl py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading profile</CardTitle>
+            <CardDescription>Pulling your saved athlete details.</CardDescription>
+          </CardHeader>
+          <CardContent className="py-8">
+            <div className="flex justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="container py-8 max-w-4xl">
+    <div className="container max-w-4xl py-8">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="mb-8 flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard">
             <ArrowLeft className="h-5 w-5" />
@@ -144,9 +175,7 @@ export default function ProfileEditPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Edit Profile</h1>
-          <p className="text-muted-foreground">
-            Update your athlete profile information
-          </p>
+          <p className="text-muted-foreground">Update your athlete profile information</p>
         </div>
       </div>
 
@@ -176,9 +205,7 @@ export default function ProfileEditPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
-                <CardDescription>
-                  Your public profile information
-                </CardDescription>
+                <CardDescription>Your public profile information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Profile Photo */}
@@ -187,12 +214,12 @@ export default function ProfileEditPage() {
                     <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
                       <AvatarImage src={imagePreview || undefined} />
                       <AvatarFallback className="text-2xl">
-                        {getInitials(session?.user?.name || "User")}
+                        {getInitials(session?.user?.name || 'User')}
                       </AvatarFallback>
                     </Avatar>
                     <label
                       htmlFor="avatar"
-                      className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors"
+                      className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       <Camera className="h-4 w-4" />
                       <input
@@ -219,13 +246,11 @@ export default function ProfileEditPage() {
                     id="bio"
                     placeholder="Tell scouts and coaches about yourself..."
                     rows={4}
-                    {...register("bio")}
+                    {...register('bio')}
                   />
-                  {errors.bio && (
-                    <p className="text-sm text-destructive">{errors.bio.message}</p>
-                  )}
+                  {errors.bio && <p className="text-sm text-destructive">{errors.bio.message}</p>}
                   <p className="text-xs text-muted-foreground">
-                    {watch("bio")?.length || 0}/500 characters
+                    {watch('bio')?.length || 0}/500 characters
                   </p>
                 </div>
 
@@ -233,23 +258,19 @@ export default function ProfileEditPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="Los Angeles"
-                      {...register("city")}
-                    />
+                    <Input id="city" placeholder="Los Angeles" {...register('city')} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">State</Label>
                     <Select
-                      value={watch("state")}
-                      onValueChange={(value) => setValue("state", value)}
+                      value={watch('state')}
+                      onValueChange={(value) => setValue('state', value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
-                        {states.map((state) => (
+                        {US_STATES.map((state) => (
                           <SelectItem key={state} value={state}>
                             {state}
                           </SelectItem>
@@ -267,26 +288,24 @@ export default function ProfileEditPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Athletic Information</CardTitle>
-                <CardDescription>
-                  Your sport and physical attributes
-                </CardDescription>
+                <CardDescription>Your sport and physical attributes</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="sport">Primary Sport</Label>
                     <Select
-                      value={watch("sport")}
+                      value={watch('sport')}
                       onValueChange={(value) => {
-                        setValue("sport", value);
-                        setValue("position", "");
+                        setValue('sport', value);
+                        setValue('position', '');
                       }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select sport" />
                       </SelectTrigger>
                       <SelectContent>
-                        {sports.map((sport) => (
+                        {PROFILE_SPORTS.map((sport) => (
                           <SelectItem key={sport} value={sport}>
                             {sport}
                           </SelectItem>
@@ -301,8 +320,8 @@ export default function ProfileEditPage() {
                   <div className="space-y-2">
                     <Label htmlFor="position">Position</Label>
                     <Select
-                      value={watch("position")}
-                      onValueChange={(value) => setValue("position", value)}
+                      value={watch('position')}
+                      onValueChange={(value) => setValue('position', value)}
                       disabled={!selectedSport || availablePositions.length === 0}
                     >
                       <SelectTrigger>
@@ -328,7 +347,7 @@ export default function ProfileEditPage() {
                       id="height"
                       type="number"
                       placeholder="72"
-                      {...register("height", { valueAsNumber: true })}
+                      {...register('height', { valueAsNumber: true })}
                     />
                     {errors.height && (
                       <p className="text-sm text-destructive">{errors.height.message}</p>
@@ -344,7 +363,7 @@ export default function ProfileEditPage() {
                       id="weight"
                       type="number"
                       placeholder="185"
-                      {...register("weight", { valueAsNumber: true })}
+                      {...register('weight', { valueAsNumber: true })}
                     />
                     {errors.weight && (
                       <p className="text-sm text-destructive">{errors.weight.message}</p>
@@ -360,26 +379,20 @@ export default function ProfileEditPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Academic Information</CardTitle>
-                <CardDescription>
-                  Your school and academic achievements
-                </CardDescription>
+                <CardDescription>Your school and academic achievements</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="school">School Name</Label>
-                  <Input
-                    id="school"
-                    placeholder="Oak Valley High School"
-                    {...register("school")}
-                  />
+                  <Input id="school" placeholder="Oak Valley High School" {...register('school')} />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="graduationYear">Graduation Year</Label>
                     <Select
-                      value={watch("graduationYear")?.toString()}
-                      onValueChange={(value) => setValue("graduationYear", parseInt(value))}
+                      value={watch('graduationYear')?.toString()}
+                      onValueChange={(value) => setValue('graduationYear', parseInt(value))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select year" />
@@ -403,11 +416,9 @@ export default function ProfileEditPage() {
                       min="0"
                       max="4.0"
                       placeholder="3.50"
-                      {...register("gpa", { valueAsNumber: true })}
+                      {...register('gpa', { valueAsNumber: true })}
                     />
-                    {errors.gpa && (
-                      <p className="text-sm text-destructive">{errors.gpa.message}</p>
-                    )}
+                    {errors.gpa && <p className="text-sm text-destructive">{errors.gpa.message}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -419,9 +430,7 @@ export default function ProfileEditPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Social Media</CardTitle>
-                <CardDescription>
-                  Connect your social media accounts
-                </CardDescription>
+                <CardDescription>Connect your social media accounts</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -432,7 +441,7 @@ export default function ProfileEditPage() {
                   <Input
                     id="instagram"
                     placeholder="https://instagram.com/username"
-                    {...register("instagram")}
+                    {...register('instagram')}
                   />
                   {errors.instagram && (
                     <p className="text-sm text-destructive">{errors.instagram.message}</p>
@@ -447,7 +456,7 @@ export default function ProfileEditPage() {
                   <Input
                     id="twitter"
                     placeholder="https://twitter.com/username"
-                    {...register("twitter")}
+                    {...register('twitter')}
                   />
                 </div>
 
@@ -456,7 +465,7 @@ export default function ProfileEditPage() {
                   <Input
                     id="tiktok"
                     placeholder="https://tiktok.com/@username"
-                    {...register("tiktok")}
+                    {...register('tiktok')}
                   />
                 </div>
 
@@ -468,7 +477,7 @@ export default function ProfileEditPage() {
                   <Input
                     id="youtube"
                     placeholder="https://youtube.com/@channel"
-                    {...register("youtube")}
+                    {...register('youtube')}
                   />
                 </div>
               </CardContent>
@@ -477,13 +486,13 @@ export default function ProfileEditPage() {
         </Tabs>
 
         {/* Save Button */}
-        <div className="flex items-center justify-end gap-4 mt-6">
+        <div className="mt-6 flex items-center justify-end gap-4">
           <Button type="button" variant="outline" asChild>
             <Link href="/dashboard">Cancel</Link>
           </Button>
           <Button type="submit" disabled={isPending}>
-            <Save className="h-4 w-4 mr-2" />
-            {isPending ? "Saving..." : "Save Changes"}
+            <Save className="mr-2 h-4 w-4" />
+            {isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

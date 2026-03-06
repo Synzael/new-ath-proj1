@@ -53,8 +53,14 @@ describe('POST /api/onboarding/complete', () => {
     mockPrisma.athlete.upsert.mockResolvedValue({});
 
     const request = createRequest({
-      firstName: 'John',
+      name: 'John Doe',
       sport: 'Basketball',
+      position: 'Point Guard',
+      school: 'Lincoln High',
+      graduationYear: 2027,
+      city: 'Los Angeles',
+      state: 'CA',
+      bio: 'Lead guard with strong court vision.',
     });
 
     const response = await POST(request);
@@ -64,14 +70,28 @@ describe('POST /api/onboarding/complete', () => {
     expect(data.success).toBe(true);
     expect(mockPrisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-123' },
-      data: { name: 'John' },
+      data: { name: 'John Doe' },
     });
     expect(mockPrisma.athlete.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-123' },
-      update: { sport: 'Basketball' },
+      update: {
+        bio: 'Lead guard with strong court vision.',
+        sport: 'Basketball',
+        position: 'Point Guard',
+        school: 'Lincoln High',
+        classYear: 2027,
+        city: 'Los Angeles',
+        state: 'CA',
+      },
       create: {
         userId: 'user-123',
+        bio: 'Lead guard with strong court vision.',
         sport: 'Basketball',
+        position: 'Point Guard',
+        school: 'Lincoln High',
+        classYear: 2027,
+        city: 'Los Angeles',
+        state: 'CA',
       },
     });
   });
@@ -84,8 +104,11 @@ describe('POST /api/onboarding/complete', () => {
     mockPrisma.coach.upsert.mockResolvedValue({});
 
     const request = createRequest({
-      firstName: 'Coach Smith',
+      name: 'Coach Smith',
+      organization: 'Oak Valley High',
       sport: 'Football',
+      roleTitle: 'Head Coach',
+      bio: 'Building a fast, disciplined program.',
     });
 
     const response = await POST(request);
@@ -95,10 +118,18 @@ describe('POST /api/onboarding/complete', () => {
     expect(data.success).toBe(true);
     expect(mockPrisma.coach.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-456' },
-      update: {},
+      update: {
+        school: 'Oak Valley High',
+        sport: 'Football',
+        position: 'Head Coach',
+        bio: 'Building a fast, disciplined program.',
+      },
       create: {
         userId: 'user-456',
+        school: 'Oak Valley High',
         sport: 'Football',
+        position: 'Head Coach',
+        bio: 'Building a fast, disciplined program.',
       },
     });
   });
@@ -111,8 +142,10 @@ describe('POST /api/onboarding/complete', () => {
     mockPrisma.brand.upsert.mockResolvedValue({});
 
     const request = createRequest({
-      firstName: 'Nike Corp',
-      sport: 'All Sports',
+      name: 'Taylor Smith',
+      companyName: 'Nike Corp',
+      website: 'https://nike.example.com',
+      description: 'Looking for athlete ambassadors.',
     });
 
     const response = await POST(request);
@@ -122,10 +155,16 @@ describe('POST /api/onboarding/complete', () => {
     expect(data.success).toBe(true);
     expect(mockPrisma.brand.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-789' },
-      update: {},
+      update: {
+        companyName: 'Nike Corp',
+        website: 'https://nike.example.com',
+        description: 'Looking for athlete ambassadors.',
+      },
       create: {
         userId: 'user-789',
         companyName: 'Nike Corp',
+        website: 'https://nike.example.com',
+        description: 'Looking for athlete ambassadors.',
       },
     });
   });
@@ -134,7 +173,7 @@ describe('POST /api/onboarding/complete', () => {
     mockAuth.mockResolvedValue(null);
 
     const request = createRequest({
-      firstName: 'John',
+      name: 'John Doe',
       sport: 'Basketball',
     });
 
@@ -162,21 +201,21 @@ describe('POST /api/onboarding/complete', () => {
     expect(data.error).toBe('Unauthorized');
   });
 
-  it('returns 400 when firstName is missing', async () => {
+  it('returns 400 when name is missing', async () => {
     mockAuth.mockResolvedValue({
       user: { id: 'user-123', role: 'ATHLETE' },
     });
 
     const request = createRequest({
       sport: 'Basketball',
-      // firstName missing
+      // name missing
     });
 
     const response = await POST(request);
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toMatch(/required|firstName/i);
+    expect(data.error).toMatch(/required|name/i);
   });
 
   it('returns 400 when sport is missing', async () => {
@@ -185,7 +224,7 @@ describe('POST /api/onboarding/complete', () => {
     });
 
     const request = createRequest({
-      firstName: 'John',
+      name: 'John Doe',
       // sport missing
     });
 
@@ -196,13 +235,13 @@ describe('POST /api/onboarding/complete', () => {
     expect(data.error).toMatch(/required|sport/i);
   });
 
-  it('returns 400 for empty firstName', async () => {
+  it('returns 400 for short name', async () => {
     mockAuth.mockResolvedValue({
       user: { id: 'user-123', role: 'ATHLETE' },
     });
 
     const request = createRequest({
-      firstName: '',
+      name: 'J',
       sport: 'Basketball',
     });
 
@@ -210,7 +249,7 @@ describe('POST /api/onboarding/complete', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('First name is required');
+    expect(data.error).toBe('Name must be at least 2 characters');
   });
 
   it('returns 400 for empty sport', async () => {
@@ -219,7 +258,7 @@ describe('POST /api/onboarding/complete', () => {
     });
 
     const request = createRequest({
-      firstName: 'John',
+      name: 'John Doe',
       sport: '',
     });
 
@@ -227,6 +266,6 @@ describe('POST /api/onboarding/complete', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Sport selection is required');
+    expect(data.error).toBe('Sport is required');
   });
 });

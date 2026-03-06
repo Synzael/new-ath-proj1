@@ -20,7 +20,9 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
       title: 'Overall Rating',
       value: latestRating?.overallScore?.toFixed(1) || 'N/A',
       icon: BarChart3,
-      description: latestRating ? `${formatPercent(latestRating.percentile)} percentile` : 'Complete your profile',
+      description: latestRating
+        ? `${formatPercent(latestRating.percentile)} percentile`
+        : 'Complete your profile',
     },
     {
       title: 'Profile Views',
@@ -62,7 +64,7 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
                 Add more details to increase your visibility to coaches
               </p>
             </div>
-            <Link href="/dashboard/profile">
+            <Link href="/profile/edit">
               <Button size="sm">Complete Profile</Button>
             </Link>
           </CardContent>
@@ -93,9 +95,7 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
         <Card>
           <CardHeader>
             <CardTitle>Rating Breakdown</CardTitle>
-            <CardDescription>
-              Your performance across different categories
-            </CardDescription>
+            <CardDescription>Your performance across different categories</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {latestRating ? (
@@ -137,8 +137,8 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <BarChart3 className="mx-auto h-12 w-12 mb-4 opacity-50" aria-hidden="true" />
+              <div className="py-8 text-center text-muted-foreground">
+                <BarChart3 className="mx-auto mb-4 h-12 w-12 opacity-50" aria-hidden="true" />
                 <p>No rating data available yet</p>
                 <p className="text-sm">Complete your profile to get rated</p>
               </div>
@@ -171,10 +171,7 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
                   time: '3 days ago',
                 },
               ].map((activity, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-4 rounded-lg border p-3"
-                >
+                <div key={i} className="flex items-start gap-4 rounded-lg border p-3">
                   <div className="flex-1">
                     <p className="text-sm font-medium">{activity.message}</p>
                     <p className="text-xs text-muted-foreground">{activity.time}</p>
@@ -192,26 +189,26 @@ export function AthleteDashboard({ user }: AthleteDashboardProps) {
             <CardDescription>Common tasks and updates</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
-            <Link href="/dashboard/profile">
-              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+            <Link href="/profile/edit">
+              <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4">
                 <User className="h-5 w-5" aria-hidden="true" />
                 <span className="text-xs">Edit Profile</span>
               </Button>
             </Link>
             <Link href="/dashboard/videos">
-              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4">
                 <Video className="h-5 w-5" aria-hidden="true" />
                 <span className="text-xs">Upload Video</span>
               </Button>
             </Link>
             <Link href="/rankings">
-              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4">
                 <TrendingUp className="h-5 w-5" aria-hidden="true" />
                 <span className="text-xs">View Rankings</span>
               </Button>
             </Link>
             <Link href="/marketplace">
-              <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4">
                 <DollarSign className="h-5 w-5" aria-hidden="true" />
                 <span className="text-xs">NIL Offers</span>
               </Button>
