@@ -10,6 +10,11 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+const mockUseSession = vi.fn();
+vi.mock('next-auth/react', () => ({
+  useSession: () => mockUseSession(),
+}));
+
 // Mock OnboardingFlow to simplify modal-level tests
 vi.mock('@/components/onboarding/onboarding-flow', () => ({
   OnboardingFlow: ({ onComplete, compact }: { onComplete?: () => void; compact?: boolean }) => (
@@ -25,6 +30,10 @@ describe('OnboardingModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
   it('renders nothing before mount (hydration safety)', () => {
@@ -80,5 +89,25 @@ describe('OnboardingModal', () => {
   it('renders the hidden dialog title for accessibility', () => {
     render(<OnboardingModal />);
     expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
+  });
+
+  it('redirects authenticated users to /onboarding and does not show modal', async () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        user: {
+          id: 'u1',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<OnboardingModal />);
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/onboarding');
+    });
+
+    expect(screen.queryByTestId('onboarding-flow')).not.toBeInTheDocument();
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('true');
   });
 });

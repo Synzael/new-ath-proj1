@@ -96,6 +96,29 @@ describe('POST /api/onboarding/complete', () => {
     });
   });
 
+  it('accepts legacy firstName payload for authenticated athlete requests', async () => {
+    mockAuth.mockResolvedValue({
+      user: { id: 'user-legacy', role: 'ATHLETE' },
+    });
+    mockPrisma.user.update.mockResolvedValue({});
+    mockPrisma.athlete.upsert.mockResolvedValue({});
+
+    const request = createRequest({
+      firstName: 'Legacy John',
+      sport: 'Basketball',
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-legacy' },
+      data: { name: 'Legacy John' },
+    });
+  });
+
   it('completes onboarding for COACH user', async () => {
     mockAuth.mockResolvedValue({
       user: { id: 'user-456', role: 'COACH' },

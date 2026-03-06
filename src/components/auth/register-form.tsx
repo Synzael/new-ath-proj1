@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/shared/loading';
+import { getOnboardingDraft } from '@/lib/onboarding-draft';
 import type { UserRole } from '@/types';
 
 interface FormState {
@@ -42,6 +43,26 @@ export function RegisterForm() {
     confirmPassword: '',
     role: 'ATHLETE',
   });
+
+  React.useEffect(() => {
+    const draft = getOnboardingDraft();
+    const draftName = draft?.name ?? draft?.firstName;
+
+    if (!draftName) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (prev.name.trim().length > 0) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        name: draftName,
+      };
+    });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -118,10 +139,7 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4 pt-6">
           {error && (
-            <div
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-              role="alert"
-            >
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
@@ -158,11 +176,7 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="role">I am a...</Label>
-            <Select
-              value={formData.role}
-              onValueChange={handleRoleChange}
-              disabled={isLoading}
-            >
+            <Select value={formData.role} onValueChange={handleRoleChange} disabled={isLoading}>
               <SelectTrigger id="role">
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
@@ -171,9 +185,7 @@ export function RegisterForm() {
                   <SelectItem key={role.value} value={role.value}>
                     <div>
                       <div className="font-medium">{role.label}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {role.description}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{role.description}</div>
                     </div>
                   </SelectItem>
                 ))}
@@ -195,9 +207,7 @@ export function RegisterForm() {
               onChange={handleChange}
               disabled={isLoading}
             />
-            <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
-            </p>
+            <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -229,11 +239,17 @@ export function RegisterForm() {
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{' '}
-            <a href="/terms" className="underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
+            <a
+              href="/terms"
+              className="rounded-sm underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="/privacy" className="underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
+            <a
+              href="/privacy"
+              className="rounded-sm underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
               Privacy Policy
             </a>
           </p>

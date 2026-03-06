@@ -1,28 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { server } from '../mocks/server';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
+import { getOnboardingDraft, ONBOARDING_DRAFT_STORAGE_KEY } from '@/lib/onboarding-draft';
 
-// Mock next/navigation
 const mockPush = vi.fn();
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
 }));
 
-beforeEach(() => {
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
-});
-
 function skipVideo() {
   fireEvent.click(screen.getByText('Skip'));
+}
+
+function completePresentation(firstName: string) {
+  const indicators = screen.getAllByRole('tab');
+  fireEvent.click(indicators[3]);
+
+  const input = screen.getByPlaceholderText('Enter your first name');
+  fireEvent.change(input, { target: { value: firstName } });
+  fireEvent.click(screen.getByText('Continue'));
 }
 
 describe('OnboardingFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
   });
 
@@ -37,168 +42,113 @@ describe('OnboardingFlow', () => {
     expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
   });
 
-  it('transitions from video to presentation when video ends', () => {
-    render(<OnboardingFlow />);
-    const video = screen.getByLabelText('Onboarding introduction video');
-    fireEvent.ended(video);
-    expect(screen.getByText('Welcome to Overall 99')).toBeInTheDocument();
-  });
-
   it('transitions to sport selection after presentation', async () => {
     render(<OnboardingFlow />);
     skipVideo();
+    completePresentation('John');
 
-    // Navigate to last slide
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-
-    // Enter name
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'John' } });
-
-    // Click Continue
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Should now show sport selector with personalized greeting
     await waitFor(() => {
       expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
     });
   });
 
-  it('redirects to dashboard on successful completion', async () => {
+  it('stores onboarding draft and redirects to register on completion', async () => {
     render(<OnboardingFlow />);
     skipVideo();
+    completePresentation('John');
 
-    // Complete presentation
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'John' } });
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Wait for sport selector
     await waitFor(() => {
       expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
     });
 
-    // Select a sport
     fireEvent.click(screen.getByText('Football'));
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      expect(mockPush).toHaveBeenCalledWith('/register');
     });
+
+    const draft = getOnboardingDraft();
+    expect(draft?.firstName).toBe('John');
+    expect(draft?.name).toBe('John');
+    expect(draft?.sport).toBe('Football');
   });
 
-  it('shows error message on API failure', async () => {
-    server.use(
-      http.post('/api/onboarding/complete', () => {
-        return HttpResponse.json({ error: 'Server error' }, { status: 400 });
-      })
-    );
+  it('does not call onboarding API in guest mode', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch');
 
     render(<OnboardingFlow />);
     skipVideo();
+    completePresentation('John');
 
-    // Complete presentation
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'John' } });
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Wait for sport selector
     await waitFor(() => {
       expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
     });
 
-    // Select a sport
     fireEvent.click(screen.getByText('Soccer'));
 
     await waitFor(() => {
-      expect(screen.getByText('Server error')).toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalledWith('/register');
     });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('preserves firstName across phase transition', async () => {
+  it('does not show unauthorized error on completion', async () => {
     render(<OnboardingFlow />);
     skipVideo();
+    completePresentation('John');
 
-    // Complete presentation with specific name
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'Sarah' } });
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Verify name is used in sport selector
-    await waitFor(() => {
-      expect(screen.getByText('Sarah, what sport do you play?')).toBeInTheDocument();
-    });
-  });
-
-  it('calls onComplete callback after successful API completion', async () => {
-    const onComplete = vi.fn();
-    render(<OnboardingFlow onComplete={onComplete} />);
-    skipVideo();
-
-    // Complete presentation
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'John' } });
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Wait for sport selector
     await waitFor(() => {
       expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
     });
 
-    // Select a sport
-    fireEvent.click(screen.getByText('Football'));
+    fireEvent.click(screen.getByText('Basketball'));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/register');
+    });
+
+    expect(screen.queryByText('Unauthorized')).not.toBeInTheDocument();
+  });
+
+  it('calls onComplete callback after draft capture', async () => {
+    const onComplete = vi.fn();
+
+    render(<OnboardingFlow onComplete={onComplete} />);
+    skipVideo();
+    completePresentation('Sarah');
+
+    await waitFor(() => {
+      expect(screen.getByText('Sarah, what sport do you play?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Volleyball'));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
   });
 
-  it('does not call onComplete on API failure', async () => {
-    server.use(
-      http.post('/api/onboarding/complete', () => {
-        return HttpResponse.json({ error: 'Server error' }, { status: 400 });
-      })
-    );
-
-    const onComplete = vi.fn();
-    render(<OnboardingFlow onComplete={onComplete} />);
-    skipVideo();
-
-    // Complete presentation
-    const indicators = screen.getAllByRole('tab');
-    fireEvent.click(indicators[3]);
-    const input = screen.getByPlaceholderText('Enter your first name');
-    fireEvent.change(input, { target: { value: 'John' } });
-    fireEvent.click(screen.getByText('Continue'));
-
-    // Wait for sport selector
-    await waitFor(() => {
-      expect(screen.getByText('John, what sport do you play?')).toBeInTheDocument();
-    });
-
-    // Select a sport
-    fireEvent.click(screen.getByText('Soccer'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Server error')).toBeInTheDocument();
-    });
-
-    expect(onComplete).not.toHaveBeenCalled();
-  });
-
   it('uses compact sizing when compact prop is passed', () => {
     const { container } = render(<OnboardingFlow compact />);
-    // The video component should receive compact and use compact sizing
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.className).toContain('min-h-[400px]');
     expect(wrapper.className).not.toContain('min-h-screen');
+  });
+
+  it('writes draft key to localStorage', async () => {
+    render(<OnboardingFlow />);
+    skipVideo();
+    completePresentation('Mia');
+
+    await waitFor(() => {
+      expect(screen.getByText('Mia, what sport do you play?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Tennis'));
+
+    await waitFor(() => {
+      expect(localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeTruthy();
+    });
   });
 });

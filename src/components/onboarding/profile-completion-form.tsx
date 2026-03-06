@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/shared/loading';
 import { PROFILE_SPORTS, SPORT_POSITIONS, US_STATES } from '@/lib/profile-options';
+import { clearOnboardingDraft, getOnboardingDraft } from '@/lib/onboarding-draft';
 import type { UserRole } from '@/types';
 
 type SupportedRole = Exclude<UserRole, 'ADMIN'>;
@@ -54,11 +55,42 @@ interface ProfileCompletionFormProps {
     | BrandProfileCompletionValues;
 }
 
+function isBlank(value: string): boolean {
+  return value.trim().length === 0;
+}
+
 export function ProfileCompletionForm({ role, initialValues }: ProfileCompletionFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [formData, setFormData] = React.useState(initialValues);
+
+  React.useEffect(() => {
+    const draft = getOnboardingDraft();
+
+    if (!draft) {
+      return;
+    }
+
+    setFormData((current) => {
+      const draftName = draft.name ?? draft.firstName;
+
+      if (role === 'ATHLETE') {
+        const athleteForm = current as AthleteProfileCompletionValues;
+        return {
+          ...athleteForm,
+          name: isBlank(athleteForm.name) && draftName ? draftName : athleteForm.name,
+          sport: isBlank(athleteForm.sport) && draft.sport ? draft.sport : athleteForm.sport,
+        };
+      }
+
+      const roleForm = current as CoachProfileCompletionValues | BrandProfileCompletionValues;
+      return {
+        ...roleForm,
+        name: isBlank(roleForm.name) && draftName ? draftName : roleForm.name,
+      };
+    });
+  }, [role]);
 
   const selectedSport =
     role === 'ATHLETE' ? (formData as AthleteProfileCompletionValues).sport : '';
@@ -80,11 +112,30 @@ export function ProfileCompletionForm({ role, initialValues }: ProfileCompletion
     setIsSubmitting(true);
     setError(null);
 
+    const draft = getOnboardingDraft();
+    const draftName = draft?.name ?? draft?.firstName;
+    let submissionData = formData;
+
+    if (role === 'ATHLETE') {
+      const athleteForm = formData as AthleteProfileCompletionValues;
+      submissionData = {
+        ...athleteForm,
+        name: isBlank(athleteForm.name) && draftName ? draftName : athleteForm.name,
+        sport: isBlank(athleteForm.sport) && draft?.sport ? draft.sport : athleteForm.sport,
+      };
+    } else {
+      const roleForm = formData as CoachProfileCompletionValues | BrandProfileCompletionValues;
+      submissionData = {
+        ...roleForm,
+        name: isBlank(roleForm.name) && draftName ? draftName : roleForm.name,
+      };
+    }
+
     try {
       const response = await fetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       const data = await response.json();
@@ -94,6 +145,7 @@ export function ProfileCompletionForm({ role, initialValues }: ProfileCompletion
         return;
       }
 
+      clearOnboardingDraft();
       router.push('/dashboard');
       router.refresh();
     } catch {
