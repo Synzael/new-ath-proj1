@@ -24,7 +24,8 @@ export default async function RankingsPage({ searchParams }: RankingsPageProps) 
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Rankings</h1>
         <p className="mt-1 text-muted-foreground">
-          Top-rated athletes based on our comprehensive rating system
+          These leaderboards highlight top talent across sports, regions, and positions based on
+          our proprietary Overall 99 rating, with updates as new verified data is submitted.
         </p>
       </div>
 
