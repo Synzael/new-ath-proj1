@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { OnboardingVideo } from './onboarding-video';
 import { PresentationSlide } from './presentation-slide';
 import { SportSelector } from './sport-selector';
+import { saveOnboardingDraft } from '@/lib/onboarding-draft';
 
 type OnboardingPhase = 'video' | 'presentation' | 'sport-selection';
 
@@ -26,7 +27,6 @@ export function OnboardingFlow({ compact, onComplete }: OnboardingFlowProps = {}
     firstName: '',
     selectedSport: null,
   });
-  const [error, setError] = React.useState<string | null>(null);
 
   const handleVideoComplete = () => {
     setState((prev) => ({ ...prev, phase: 'presentation' }));
@@ -40,36 +40,20 @@ export function OnboardingFlow({ compact, onComplete }: OnboardingFlowProps = {}
     }));
   };
 
-  const handleSportSelect = async (sport: string) => {
+  const handleSportSelect = (sport: string) => {
     setState((prev) => ({ ...prev, selectedSport: sport }));
-    setError(null);
 
-    try {
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: state.firstName,
-          sport,
-        }),
-      });
+    saveOnboardingDraft({
+      name: state.firstName,
+      firstName: state.firstName,
+      sport,
+    });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to complete onboarding');
-      }
+    // Notify parent (modal) that flow is complete
+    onComplete?.();
 
-      // Notify parent (modal) that flow is complete
-      onComplete?.();
-
-      // Navigate to dashboard on success
-      router.push('/dashboard');
-    } catch (err) {
-      console.error('Onboarding completion error:', err);
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-      // Reset selected sport so user can try again
-      setState((prev) => ({ ...prev, selectedSport: null }));
-    }
+    // Continue to account creation
+    router.push('/register');
   };
 
   if (state.phase === 'video') {
@@ -81,13 +65,6 @@ export function OnboardingFlow({ compact, onComplete }: OnboardingFlowProps = {}
   }
 
   return (
-    <>
-      <SportSelector firstName={state.firstName} onSelect={handleSportSelect} compact={compact} />
-      {error && (
-        <div className="fixed bottom-4 left-4 right-4 mx-auto max-w-md bg-destructive/90 text-destructive-foreground px-4 py-3 rounded-lg text-center">
-          {error}
-        </div>
-      )}
-    </>
+    <SportSelector firstName={state.firstName} onSelect={handleSportSelect} compact={compact} />
   );
 }

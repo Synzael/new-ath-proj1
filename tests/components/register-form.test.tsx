@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server';
 import { RegisterForm } from '@/components/auth/register-form';
+import { ONBOARDING_DRAFT_STORAGE_KEY } from '@/lib/onboarding-draft';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -18,12 +19,14 @@ vi.mock('next-auth/react', () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
-function fillRegistrationForm(overrides: {
-  name?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-} = {}) {
+function fillRegistrationForm(
+  overrides: {
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  } = {}
+) {
   const {
     name = 'John Doe',
     email = 'john@example.com',
@@ -47,6 +50,7 @@ function fillRegistrationForm(overrides: {
 describe('RegisterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     mockSignIn.mockResolvedValue({ error: null });
   });
 
@@ -73,6 +77,22 @@ describe('RegisterForm', () => {
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
 
     expect(nameInput).toHaveValue('John Doe');
+  });
+
+  it('prefills name from onboarding draft when field is empty', () => {
+    localStorage.setItem(
+      ONBOARDING_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        createdAt: Date.now(),
+        firstName: 'Draft Athlete',
+        sport: 'Football',
+      })
+    );
+
+    render(<RegisterForm />);
+
+    expect(screen.getByLabelText('Full Name')).toHaveValue('Draft Athlete');
   });
 
   it('updates email input value', () => {
@@ -102,9 +122,7 @@ describe('RegisterForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        'Password must be at least 8 characters'
-      );
+      expect(screen.getByRole('alert')).toHaveTextContent('Password must be at least 8 characters');
     });
   });
 
@@ -122,10 +140,7 @@ describe('RegisterForm', () => {
   it('shows error on registration API failure', async () => {
     server.use(
       http.post('/api/auth/register', () => {
-        return HttpResponse.json(
-          { error: 'User with this email already exists' },
-          { status: 400 }
-        );
+        return HttpResponse.json({ error: 'User with this email already exists' }, { status: 400 });
       })
     );
 
@@ -135,9 +150,7 @@ describe('RegisterForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        'User with this email already exists'
-      );
+      expect(screen.getByRole('alert')).toHaveTextContent('User with this email already exists');
     });
   });
 

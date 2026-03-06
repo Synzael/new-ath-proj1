@@ -8,6 +8,27 @@ import {
   coachOnboardingSchema,
 } from '@/lib/validations';
 
+function normalizeLegacyOnboardingBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') {
+    return body;
+  }
+
+  const payload = body as Record<string, unknown>;
+
+  if (typeof payload.name === 'string' && payload.name.trim().length > 0) {
+    return payload;
+  }
+
+  if (typeof payload.firstName !== 'string' || payload.firstName.trim().length === 0) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    name: payload.firstName,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -16,7 +37,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const requestBody = await request.json();
+    const body = normalizeLegacyOnboardingBody(requestBody);
 
     if (session.user.role === 'ATHLETE') {
       const validatedData = athleteOnboardingSchema.parse(body);
