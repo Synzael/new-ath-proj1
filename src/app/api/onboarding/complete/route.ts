@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-const onboardingSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  sport: z.string().min(1, 'Sport selection is required'),
-});
+import {
+  athleteOnboardingSchema,
+  brandOnboardingSchema,
+  coachOnboardingSchema,
+} from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,63 +17,102 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { firstName, sport } = onboardingSchema.parse(body);
 
-    // Update user name
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { name: firstName },
-    });
-
-    // If user is an athlete, create/update athlete profile with sport
     if (session.user.role === 'ATHLETE') {
+      const validatedData = athleteOnboardingSchema.parse(body);
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name: validatedData.name },
+      });
+
       await prisma.athlete.upsert({
         where: { userId: session.user.id },
-        update: { sport },
+        update: {
+          bio: validatedData.bio,
+          sport: validatedData.sport,
+          position: validatedData.position,
+          school: validatedData.school,
+          classYear: validatedData.graduationYear,
+          city: validatedData.city,
+          state: validatedData.state,
+        },
         create: {
           userId: session.user.id,
-          sport,
+          bio: validatedData.bio,
+          sport: validatedData.sport,
+          position: validatedData.position,
+          school: validatedData.school,
+          classYear: validatedData.graduationYear,
+          city: validatedData.city,
+          state: validatedData.state,
         },
       });
+
+      return NextResponse.json({ success: true });
     }
 
-    // If user is a coach, create coach profile if doesn't exist
     if (session.user.role === 'COACH') {
+      const validatedData = coachOnboardingSchema.parse(body);
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name: validatedData.name },
+      });
+
       await prisma.coach.upsert({
         where: { userId: session.user.id },
-        update: {},
+        update: {
+          school: validatedData.organization,
+          sport: validatedData.sport,
+          position: validatedData.roleTitle,
+          bio: validatedData.bio,
+        },
         create: {
           userId: session.user.id,
-          sport, // Use selected sport as coaching specialty
+          school: validatedData.organization,
+          sport: validatedData.sport,
+          position: validatedData.roleTitle,
+          bio: validatedData.bio,
         },
       });
+
+      return NextResponse.json({ success: true });
     }
 
-    // If user is a brand, create brand profile if doesn't exist
     if (session.user.role === 'BRAND') {
+      const validatedData = brandOnboardingSchema.parse(body);
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name: validatedData.name },
+      });
+
       await prisma.brand.upsert({
         where: { userId: session.user.id },
-        update: {},
+        update: {
+          companyName: validatedData.companyName,
+          website: validatedData.website,
+          description: validatedData.description,
+        },
         create: {
           userId: session.user.id,
-          companyName: firstName, // Use firstName as company name initially
+          companyName: validatedData.companyName,
+          website: validatedData.website,
+          description: validatedData.description,
         },
       });
+
+      return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: 'Unsupported role' }, { status: 400 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
     }
 
     console.error('Onboarding error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
